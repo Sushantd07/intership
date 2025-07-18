@@ -1,11 +1,10 @@
 @import "tailwindcss";
-/* src/index.css */
 
-
-body {
- font-family: 'Ubuntu', sans-serif;
-  background-color: #f9fafb;
+html, body {
+  /* overflow-x: hidden; */
+  font-family: 'Ubuntu', sans-serif;
 }
+
 
 @layer utilities {
   @keyframes marquee {
@@ -17,3 +16,12 @@ body {
     animation: marquee 25s linear infinite;
   }
 }
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
