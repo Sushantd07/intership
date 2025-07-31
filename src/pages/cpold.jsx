@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import ImageThumbnail from "../components/ImageThumbnail";
 import {
   Phone,
   Star,
@@ -28,6 +27,7 @@ import {
   Download,
   Share2,
   Bookmark,
+  ThumbsUp,
   MessageCircle,
   Flag,
   Info,
@@ -54,9 +54,10 @@ import {
   Home,
   User,
   Smile,
-  UserPlus,
+  Paperclip,
+  MoreHorizontal,
+  Trash2,
 } from "lucide-react";
-import CommentSection from '../components/CommentSection';
 const icons = [PhoneCall, AlertCircle, CreditCard, Shield];
 const sbiContacts = {
   tollFree: [
@@ -100,6 +101,8 @@ const CompanyPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
+  // State for comment dropdown menus
+  const [openDropdown, setOpenDropdown] = useState(null);
   // Map URL segment to tab id
   const tabUrlToId = {
     contactnumber: "numbers",
@@ -134,16 +137,30 @@ const CompanyPage = () => {
   const [smsDropdownOpen, setSmsDropdownOpen] = useState(false);
   // Add at the top of the component, after other useState hooks
   const [selectedIVRS, setSelectedIVRS] = useState(0);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState(null);
+  const ivrsSteps = [
+    [
+      { title: "Press 1: Account Balance & Statement", sub: ["Press 1: Balance Enquiry", "Press 2: Mini Statement"] },
+      { title: "Press 2: Fund Transfer & Payment", sub: ["Press 1: Block Card", "Press 2: Card Limit Enquiry"] },
+      { title: "Press 3: Card Services", sub: ["Press 1: Debit card blocking and replacement", "Press 2: Block UPI services"] },
+      { title: "Press 4: Loan Services", sub: ["Press 1: Generate ATM Pin", "Press 2: Generate T-pin"] },
+      { title: "Press 5: Fixed Deposit Services", sub: ["Press 1: FD Information", "Press 2: FD Renewal"] },
+      { title: "Press 6: Complaint Registration", sub: [] },
+    ],
+    [
+      { title: "Press 1: Credit Card Services", sub: ["Press 1: Card Balance", "Press 2: Card Statement"] },
+      { title: "Press 2: Card Activation", sub: ["Press 1: Activate Card", "Press 2: Set PIN"] },
+      { title: "Press 3: Card Blocking", sub: ["Press 1: Block Card", "Press 2: Report Fraud"] },
+    ],
+    [
+      { title: "Press 1: Loan Services", sub: ["Press 1: Loan Balance", "Press 2: Loan Statement"] },
+      { title: "Press 2: EMI Services", sub: ["Press 1: EMI Schedule", "Press 2: Pay EMI"] },
+      { title: "Press 3: Foreclosure", sub: ["Press 1: Foreclosure Quote"] },
+    ],
+  ];
 
   // Fetch contact numbers data from API
-  const fetchContactNumbersData = async (isManualRefresh = false) => {
-    if (isManualRefresh) {
-      setIsRefreshing(true);
-    } else {
-      setLoading(true);
-    }
+  const fetchContactNumbersData = async () => {
+    setLoading(true);
     setError(null);
     try {
       const response = await fetch('http://localhost:3000/api/tabs/contact-numbers');
@@ -153,7 +170,6 @@ const CompanyPage = () => {
       const result = await response.json();
       if (result.success) {
         setContactNumbersData(result.data);
-        setLastUpdated(new Date());
       } else {
         throw new Error(result.message || 'Failed to fetch data');
       }
@@ -162,7 +178,6 @@ const CompanyPage = () => {
       console.error('Error fetching contact numbers:', err);
     } finally {
       setLoading(false);
-      setIsRefreshing(false);
     }
   };
 
@@ -171,28 +186,6 @@ const CompanyPage = () => {
     if (activeTab === "numbers") {
       fetchContactNumbersData();
     }
-  }, [activeTab]);
-
-  // Real-time data fetching with polling
-  useEffect(() => {
-    let intervalId;
-    
-    if (activeTab === "numbers") {
-      // Initial fetch
-      fetchContactNumbersData();
-      
-      // Set up polling every 30 seconds for real-time updates
-      intervalId = setInterval(() => {
-        fetchContactNumbersData(false); // Auto-refresh, not manual
-      }, 30000); // 30 seconds interval
-    }
-
-    // Cleanup interval on component unmount or tab change
-    return () => {
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
-    };
   }, [activeTab]);
 
   // Redirect to /contactnumber if no tab is present in the URL
@@ -205,14 +198,254 @@ const CompanyPage = () => {
     }
   }, [categoryId, companySlug, location.pathname, navigate]);
 
-  // Company data - simplified for basic info only
+  // Company data
   const companyData = {
+    telecom: {
+      "mobile-networks": {
+        jio: {
+          name: "Reliance Jio",
+          logo: "https://logos-world.net/wp-content/uploads/2020/09/Jio-Logo.png",
+          description:
+            "India's largest 4G network provider offering comprehensive digital services including mobile plans, fiber broadband, and digital entertainment.",
+          rating: 4.8,
+          totalReviews: 2847,
+          monthlySearches: "45K",
+          founded: "2016",
+          headquarters: "Mumbai, Maharashtra",
+          website: "https://www.jio.com",
+          parentCompany: "Reliance Industries Limited",
+          services: [
+            "Mobile Plans & Recharge",
+            "JioFiber Broadband",
+            "JioTV & Digital Services",
+            "Enterprise Solutions",
+            "IoT & 5G Services",
+          ],
+          nationalNumbers: [
+            {
+              type: "Customer Care",
+              number: "199",
+              description: "General customer support and service inquiries",
+              available: "24x7",
+              languages: ["Hindi", "English", "Regional Languages"],
+              avgWaitTime: "2-3 minutes",
+            },
+            {
+              type: "Technical Support",
+              number: "198",
+              description: "Network issues, internet connectivity problems",
+              available: "24x7",
+              languages: ["Hindi", "English"],
+              avgWaitTime: "3-5 minutes",
+            },
+            {
+              type: "Sales & New Connections",
+              number: "1800-889-9999",
+              description: "New connections, plan upgrades, sales inquiries",
+              available: "9 AM - 9 PM",
+              languages: ["Hindi", "English", "Regional Languages"],
+              avgWaitTime: "1-2 minutes",
+            },
+          ],
+          stateWiseNumbers: {
+            Maharashtra: [
+              {
+                city: "Mumbai",
+                number: "022-6666-7777",
+                type: "Regional Office",
+              },
+              {
+                city: "Pune",
+                number: "020-6666-8888",
+                type: "Regional Office",
+              },
+              {
+                city: "Nagpur",
+                number: "0712-666-9999",
+                type: "Regional Office",
+              },
+            ],
+            Delhi: [
+              {
+                city: "New Delhi",
+                number: "011-6666-1111",
+                type: "Regional Office",
+              },
+              {
+                city: "Gurgaon",
+                number: "0124-666-2222",
+                type: "Regional Office",
+              },
+            ],
+            Karnataka: [
+              {
+                city: "Bangalore",
+                number: "080-6666-3333",
+                type: "Regional Office",
+              },
+              {
+                city: "Mysore",
+                number: "0821-666-4444",
+                type: "Regional Office",
+              },
+            ],
+            "Tamil Nadu": [
+              {
+                city: "Chennai",
+                number: "044-6666-5555",
+                type: "Regional Office",
+              },
+              {
+                city: "Coimbatore",
+                number: "0422-666-6666",
+                type: "Regional Office",
+              },
+            ],
+          },
+          complaintSteps: [
+            {
+              step: 1,
+              title: "Try Customer Care First",
+              description:
+                "Call 199 for immediate assistance. Most issues are resolved within the first call.",
+              icon: Phone,
+            },
+            {
+              step: 2,
+              title: "Use MyJio App",
+              description:
+                "Download MyJio app and use the complaint section for faster resolution.",
+              icon: Smartphone,
+            },
+            {
+              step: 3,
+              title: "Visit Jio Store",
+              description:
+                "Visit your nearest Jio store with required documents for complex issues.",
+              icon: Building2,
+            },
+            {
+              step: 4,
+              title: "Online Complaint Portal",
+              description:
+                "Use Jio's official website complaint portal for detailed issue reporting.",
+              icon: Globe,
+            },
+            {
+              step: 5,
+              title: "Social Media",
+              description:
+                "Reach out via Twitter @JioCare or Facebook for public complaint resolution.",
+              icon: MessageCircle,
+            },
+            {
+              step: 6,
+              title: "Consumer Forum",
+              description:
+                "If unresolved, approach consumer court or TRAI for regulatory intervention.",
+              icon: FileText,
+            },
+          ],
+          videoGuide: {
+            title: "How to File a Complaint with Jio Customer Care",
+            videoId: "dQw4w9WgXcQ",
+            thumbnail:
+              "https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg",
+            duration: "5:32",
+            views: "1.2M",
+            description:
+              "Complete step-by-step guide on how to file and track complaints with Jio customer care through various channels.",
+          },
+        },
+        airtel: {
+          name: "Airtel",
+          logo: "https://logos-world.net/wp-content/uploads/2020/09/Airtel-Logo.png",
+          description:
+            "Leading telecommunications company providing mobile, broadband, and digital TV services across India.",
+          rating: 4.7,
+          totalReviews: 2156,
+          monthlySearches: "38K",
+          founded: "1995",
+          headquarters: "New Delhi, India",
+          website: "https://www.airtel.in",
+          parentCompany: "Bharti Enterprises",
+          services: [
+            "Mobile Plans & Recharge",
+            "Airtel Xstream Fiber",
+            "DTH Services",
+            "Enterprise Solutions",
+            "Digital Payments",
+          ],
+          nationalNumbers: [
+            {
+              type: "Customer Care",
+              number: "121",
+              description: "General customer support and service inquiries",
+              available: "24x7",
+              languages: ["Hindi", "English", "Regional Languages"],
+              avgWaitTime: "2-4 minutes",
+            },
+            {
+              type: "Technical Support",
+              number: "198",
+              description: "Network issues, internet connectivity problems",
+              available: "24x7",
+              languages: ["Hindi", "English"],
+              avgWaitTime: "3-5 minutes",
+            },
+          ],
+          stateWiseNumbers: {
+            Delhi: [
+              {
+                city: "New Delhi",
+                number: "011-4567-8901",
+                type: "Regional Office",
+              },
+            ],
+            Maharashtra: [
+              {
+                city: "Mumbai",
+                number: "022-4567-8901",
+                type: "Regional Office",
+              },
+            ],
+          },
+          complaintSteps: [
+            {
+              step: 1,
+              title: "Call Customer Care",
+              description:
+                "Call 121 for immediate assistance and complaint registration.",
+              icon: Phone,
+            },
+            {
+              step: 2,
+              title: "Use Airtel Thanks App",
+              description:
+                "Use the official Airtel Thanks app for complaint tracking.",
+              icon: Smartphone,
+            },
+          ],
+          videoGuide: {
+            title: "Airtel Customer Care Guide",
+            videoId: "dQw4w9WgXcQ",
+            thumbnail:
+              "https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg",
+            duration: "4:15",
+            views: "850K",
+            description:
+              "How to contact Airtel customer care and resolve issues quickly.",
+          },
+        },
+      },
+    },
     banking: {
       "private-banks": {
         "hdfc-bank": {
-          name: "HDFC Bank Customer Care – Toll-Free Numbers & Support",
+          name: "HDFC Bank Customer Care – Toll-Free Numbers & Support ",
           logo: "/company-logos/bank-hdfc.png",
-          description: "India's leading private sector bank offering comprehensive banking and financial services.",
+          description:
+            "India's leading private sector bank offering comprehensive banking and financial services.",
           rating: 4.8,
           totalReviews: 3245,
           monthlySearches: "48K",
@@ -222,7 +455,7 @@ const CompanyPage = () => {
           parentCompany: "HDFC Limited",
           services: [
             "Savings & Current Accounts",
-            "Credit Cards", 
+            "Credit Cards",
             "Personal & Home Loans",
             "Investment Services",
             "Digital Banking",
@@ -237,7 +470,7 @@ const CompanyPage = () => {
               avgWaitTime: "1-2 minutes",
             },
             {
-              type: "Credit Card Support", 
+              type: "Credit Card Support",
               number: "1800-266-4332",
               description: "Credit card related queries and support",
               available: "24x7",
@@ -254,24 +487,55 @@ const CompanyPage = () => {
             {
               step: 1,
               title: "Call Customer Care",
-              description: "Call the dedicated customer care number for your service.",
+              description:
+                "Call the dedicated customer care number for your service.",
               icon: Phone,
             },
             {
               step: 2,
-              title: "Visit Branch", 
-              description: "Visit your nearest HDFC Bank branch for assistance.",
+              title: "Visit Branch",
+              description:
+                "Visit your nearest HDFC Bank branch for assistance.",
               icon: Building2,
             },
           ],
           videoGuide: {
             title: "HDFC Bank Customer Support Guide",
             videoId: "dQw4w9WgXcQ",
-            thumbnail: "https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg",
+            thumbnail:
+              "https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg",
             duration: "6:20",
             views: "1.5M",
-            description: "Complete guide to HDFC Bank customer support services.",
+            description:
+              "Complete guide to HDFC Bank customer support services.",
           },
+          smsServices: [
+            { code: "BAL", description: "Check your account balance", number: "5676712" },
+            { code: "MINI", description: "Get mini statement", number: "5676712" },
+            { code: "CHQBOOK", description: "Request cheque book", number: "5676712" },
+            { code: "STOP", description: "Stop cheque payment", number: "5676712" },
+          ],
+          ivrMenu: {
+            mainMenu: [
+              { option: "1", description: "Account Balance & Statement" },
+              { option: "2", description: "Fund Transfer & Payment" },
+              { option: "3", description: "Card Services" },
+              { option: "4", description: "Loan Services" },
+              { option: "5", description: "Fixed Deposit Services" },
+              { option: "6", description: "Complaint Registration" },
+              { option: "0", description: "Talk to Customer Service" },
+            ],
+            subMenus: {
+              "1": [
+                { option: "1", description: "Balance Enquiry" },
+                { option: "2", description: "Mini Statement" },
+              ],
+              "2": [
+                { option: "1", description: "Block Card" },
+                { option: "2", description: "Card Limit Enquiry" },
+              ],
+            }
+          }
         },
       },
     },
@@ -432,20 +696,6 @@ const CompanyPage = () => {
           ></div>
         </div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6"> {/* Reduced vertical padding */}
-          {/* Last Verified Badge - Top Right Corner */}
-          <div className="absolute top-4 right-4 z-10">
-            <div className="inline-flex items-center gap-2 bg-white/90 backdrop-blur-sm border border-white/30 rounded-full px-3 py-1.5 shadow-sm">
-              <CheckCircle className="h-4 w-4 text-green-600" />
-              <span className="text-xs font-medium text-gray-700">
-                Verified: {new Date().toLocaleDateString("en-IN", {
-                  year: "numeric",
-                  month: "short",
-                  day: "numeric",
-                })}
-              </span>
-            </div>
-          </div>
-          
           {/* Professional Breadcrumb */}
           <div className="flex items-center gap-3 text-white/80 mb-3">
             <button 
@@ -634,8 +884,6 @@ const CompanyPage = () => {
           </div>
         </div>
       </div>
-
-
 
       {/* Tab Content */}
       <div className="max-w-7xl mx-auto bg-[#F4F8FF] px-4 sm:px-6 lg:px-8 py-12">
@@ -955,71 +1203,72 @@ const CompanyPage = () => {
                 )}
 
                 {/* IVRS Menu */}
-                {contactNumbersData?.ivrMenuSection && (
-                  <div className="mb-8">
-                    <div className="bg-gray-50 rounded-2xl shadow border border-gray-100 p-6 max-w-5xl mx-auto">
-                      <div className="mb-4 text-center flex justify-center items-center gap-0">
-                        <span className="font-bold text-lg text-blue-900 mr-3">IVRS Menu:</span>
-                        {contactNumbersData.ivrMenuSection.menus?.map((menu, idx) => {
-                          const isActive = selectedIVRS === idx;
-                          return (
-                            <React.Fragment key={idx}>
-                              {idx > 0 && <span className="mx-2 text-gray-300 font-bold text-lg">/</span>}
-                              <button
-                                onClick={() => setSelectedIVRS(idx)}
-                                className={
-                                  `flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200
-                                  text-base font-medium shadow-sm
-                                  ${isActive
-                                    ? 'bg-blue-600 text-white border-blue-700 shadow-md'
-                                    : 'bg-white text-blue-700 border-blue-300 hover:bg-blue-100 hover:shadow'}
-                                  `
-                                }
-                                style={{ minWidth: 140 }}
-                              >
-                                <Phone className="inline h-5 w-5 mb-1" />
-                                {menu.title}
-                              </button>
-                            </React.Fragment>
-                          );
-                        })}
-                      </div>
-                      <div className="text-gray-700 text-sm mb-4 text-center font-normal">
-                        <span className="font-medium">
-                          {contactNumbersData.ivrMenuSection.description}
-                        </span>
-                      </div>
-                      <AnimatePresence mode="wait">
-                        <motion.div
-                          key={selectedIVRS}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -20 }}
-                          transition={{ duration: 0.4 }}
-                        >
-                          <ul className="space-y-4">
-                            {contactNumbersData.ivrMenuSection.menus?.[selectedIVRS]?.options?.map((item, index) => (
-                              <li key={index}>
-                                <div className="font-medium text-blue-800">
-                                  Press {item.option}: {item.description}
-                                </div>
-                                {item.subOptions && item.subOptions.length > 0 && (
-                                  <ul className="ml-6 mt-2 space-y-1 border-l-2 border-blue-100 pl-4 bg-blue-50 rounded">
-                                    {item.subOptions.map((child, childIndex) => (
-                                      <li key={childIndex}>
-                                        <span className="font-medium text-blue-700">Press {child.option}: {child.description}</span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                )}
-                              </li>
-                            ))}
-                          </ul>
-                        </motion.div>
-                      </AnimatePresence>
+                <div className="mb-8">
+                  <div className="bg-gray-50 rounded-2xl shadow border border-gray-100 p-6 max-w-5xl mx-auto">
+                    <div className="mb-4 text-center flex justify-center items-center gap-0">
+                      <span className="font-bold text-lg text-blue-900 mr-3">IVRS Menu:</span>
+                      {[0, 1, 2].map((idx) => {
+                        const number = company?.nationalNumbers?.[idx]?.number;
+                        const isActive = selectedIVRS === idx;
+                        const isRealNumber = !!number;
+                        return (
+                          <React.Fragment key={idx}>
+                            {idx > 0 && <span className="mx-2 text-gray-300 font-bold text-lg">/</span>}
+                            <button
+                              onClick={() => isRealNumber && setSelectedIVRS(idx)}
+                              className={
+                                `flex items-center gap-2 px-4 py-2 rounded-lg border transition-all duration-200
+                                text-base font-medium shadow-sm
+                                ${isActive
+                                  ? 'bg-blue-600 text-white border-blue-700 shadow-md'
+                                  : isRealNumber
+                                    ? 'bg-white text-blue-700 border-blue-300 hover:bg-blue-100 hover:shadow'
+                                    : 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'}
+                                `
+                              }
+                              style={{ minWidth: 140, cursor: isRealNumber ? 'pointer' : 'not-allowed' }}
+                              disabled={!isRealNumber}
+                            >
+                              <Phone className="inline h-5 w-5 mb-1" />
+                              {number || `Number ${idx + 1}`}
+                            </button>
+                          </React.Fragment>
+                        );
+                      })}
                     </div>
+                    <div className="text-gray-700 text-sm mb-4 text-center font-normal">
+                      <span className="font-medium">After selecting preferred language: Hindi, English, Marathi</span>
+                    </div>
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={selectedIVRS}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ duration: 0.4 }}
+                      >
+                        <ul className="space-y-4">
+                          {ivrsSteps[selectedIVRS].map((item, index) => (
+                            <li key={index}>
+                              <div className="font-medium text-blue-800">
+                                {item.title}
+                              </div>
+                              {item.sub && item.sub.length > 0 && (
+                                <ul className="ml-6 mt-2 space-y-1 border-l-2 border-blue-100 pl-4 bg-blue-50 rounded">
+                                  {item.sub.map((child, childIndex) => (
+                                    <li key={childIndex}>
+                                      <span className="font-medium text-blue-700">{child}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      </motion.div>
+                    </AnimatePresence>
                   </div>
-                )}
+                </div>
 
                 {/* Compact Modern Quick Links Section */}
                 {/* <div className="mb-8">
@@ -1068,39 +1317,161 @@ const CompanyPage = () => {
                 </div> */}
 
                 {/* Email Support (full width, below) */}
-                {contactNumbersData?.emailSupportSection && (
-                  <div className="bg-white rounded-xl shadow p-4">
-                    <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2 mb-4">
-                      <Mail className="w-5 h-5 text-blue-600" /> {contactNumbersData.emailSupportSection.heading?.text || "Email Support"}
+                <div className="bg-white rounded-xl shadow p-4">
+                  <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2 mb-4">
+                    <Mail className="w-5 h-5 text-blue-600" /> Email Support
+                  </h3>
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-gray-100 text-gray-700 text-left font-semibold">
+                        <th className="py-2 px-3">Service</th>
+                        <th className="py-2 px-3">Email</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        ["General Enquiries", "support@sbi.co.in", "24x7"],
+                        [
+                          "Credit Card Support",
+                          "cards@sbi.co.in",
+                          "10 AM – 5 PM",
+                        ],
+                        ["Internet Banking", "onlinesbi@sbi.co.in", "24x7"],
+                        ["Complaints", "complaints@sbi.co.in", "24x7"],
+                        ["Cyber Security", "cybersecurity@sbi.co.in", "24x7"],
+                      ].map(([label, email, timing], idx) => (
+                        <tr
+                          key={label}
+                          className={idx % 2 === 0 ? "bg-gray-50" : ""}
+                        >
+                          <td className="py-3 px-3 font-semibold text-[15px] text-gray-800">
+                            <span className="inline-block border-l-4 border-blue-600 pl-2">
+                              {label}
+                            </span>
+                          </td>
+                          <td className="py-3 px-3 text-blue-600 font-bold whitespace-nowrap flex items-center gap-2 text-[15px]">
+                            {email}
+                            <button
+                              onClick={() => copyToClipboard(email)}
+                              title="Copy"
+                              className="hover:text-blue-500"
+                            >
+                              <Copy className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Service-wise Numbers Table (unique modern style) */}
+                <div className="bg-white rounded-2xl shadow-lg p-4 overflow-x-auto">
+                  <h3 className="text-2xl font-bold text-blue-700 mb-4 flex items-center gap-2">
+                    <Phone className="w-6 h-6 text-blue-500" /> Service-wise Toll
+                    Free Numbers
+                  </h3>
+                  <table className="min-w-full text-sm table-fixed border border-blue-100">
+                    <thead className="bg-blue-50 text-blue-900 font-bold">
+                      <tr>
+                        <th className="py-2 px-3 w-10 text-center">#</th>
+                        <th className="py-2 px-3">Service</th>
+                        <th className="py-2 px-3">Toll Free No.</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        ["Reporting Unauthorised Transactions", ["1800111109"]],
+                        ["SBI YONO", ["1800111101"]],
+                        [
+                          "Pensioners",
+                          ["1800110009", "18004253800", "1800112211"],
+                        ],
+                        ["PMJDY", ["1800110001"]],
+                        ["SBI FASTag", ["1800110018"]],
+                        ["Home Loan", ["1800112018"]],
+                        ["Income Tax Refund Orders (ITRO)", ["18004259760"]],
+                        ["Wealth & Platinum Customers", ["18008900"]],
+                        ["Doorstep Banking Services", ["1800111103"]],
+                        ["Senior Citizen & Differently-abled", ["18008888"]],
+                        ["Other PMJDY Numbers", ["1800110001", "18001801111"]],
+                        ["GST Related Queries", ["1800112017"]],
+                        ["Credit Card Payment Queries", ["8422845515"]],
+                        ["Available Credit Limit", ["8108100986"]],
+                        ["Report Unauthorised Transactions", ["9449112211"]],
+                        ["Doorstep Banking", ["9152202020"]],
+                        ["Credit Card Queries", ["18001801290"]],
+                      ].map(([service, numbers], idx) => (
+                        <tr
+                          key={service}
+                          className={idx % 2 === 0 ? "bg-blue-50/40" : "bg-white"}
+                        >
+                          <td className="py-2 px-3 text-center text-gray-700 font-medium">
+                            {idx + 1}
+                          </td>
+                          <td className="py-2 px-3 text-gray-800 truncate max-w-[250px]">
+                            {service}
+                          </td>
+                          <td className="py-2 px-3">
+                            <div className="flex flex-wrap gap-x-2 gap-y-1 text-blue-700 font-semibold">
+                              {numbers.map((num) => (
+                                <div
+                                  key={num}
+                                  className="flex items-center text-[15px] gap-1 whitespace-nowrap"
+                                >
+                                  {num}
+                                  <button
+                                    onClick={() => copyToClipboard(num)}
+                                    title="Copy"
+                                    className="hover:text-blue-500"
+                                  >
+                                    <Copy className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Additional Tables from Uploaded Image */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Missed Call Service */}
+                  <div className="bg-white rounded-xl shadow p-6 overflow-x-auto">
+                    <h3 className="text-xl font-bold text-gray-800 mb-4">
+                      Missed Call Service
                     </h3>
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="bg-gray-100 text-gray-700 text-left font-semibold">
-                          {contactNumbersData.emailSupportSection.table?.headers?.map((header, idx) => (
-                            <th key={idx} className="py-2 px-3">{header}</th>
-                          )) || (
-                            <>
-                              <th className="py-2 px-3">Service</th>
-                              <th className="py-2 px-3">Email</th>
-                            </>
-                          )}
+                    <table className="min-w-full text-sm text-left table-auto">
+                      <thead className="bg-gray-100 text-gray-700 font-semibold">
+                        <tr>
+                          <th className="py-2 px-3">Sr No.</th>
+                          <th className="py-2 px-3">Service Name</th>
+                          <th className="py-2 px-3">Contact No.</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {contactNumbersData.emailSupportSection.table?.rows?.map((row, idx) => (
+                        {[
+                          ["For Balance Enquiry", "9223766666"],
+                          ["For Mini Statement", "9223866666"],
+                          ["For Home Loan", "7208933140"],
+                          ["For Car Loan", "7208933141"],
+                          ["For Gold Loan", "7208933143"],
+                          ["For Personal Loan", "7208933142"],
+                          ["For SME", "7208933144"],
+                        ].map(([service, number], idx) => (
                           <tr
-                            key={idx}
+                            key={service}
                             className={idx % 2 === 0 ? "bg-gray-50" : ""}
                           >
-                            <td className="py-3 px-3 font-semibold text-[15px] text-gray-800">
-                              <span className="inline-block border-l-4 border-blue-600 pl-2">
-                                {row[0]}
-                              </span>
-                            </td>
-                            <td className="py-3 px-3 text-blue-600 font-bold whitespace-nowrap flex items-center gap-2 text-[15px]">
-                              {row[1]}
+                            <td className="py-2 px-3 text-gray-700">{idx + 1}</td>
+                            <td className="py-2 px-3 text-gray-800">{service}</td>
+                            <td className="py-2 px-3 text-blue-700 text-[15px] font-semibold whitespace-nowrap flex items-center gap-1">
+                              {number}
                               <button
-                                onClick={() => copyToClipboard(row[1])}
+                                onClick={() => copyToClipboard(number)}
                                 title="Copy"
                                 className="hover:text-blue-500"
                               >
@@ -1112,143 +1483,259 @@ const CompanyPage = () => {
                       </tbody>
                     </table>
                   </div>
-                )}
 
-                {/* NRI Phone Banking Support and Missed Call Service */}
-                {contactNumbersData?.nriPhoneBankingSection && contactNumbersData?.missedCallServiceSection && (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* NRI Phone Banking Support */}
-                    <div className="bg-white rounded-xl shadow p-6">
-                      <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                        <Phone className="w-5 h-5 text-blue-600" /> {contactNumbersData.nriPhoneBankingSection.heading?.text || "NRI Phone Banking Support"}
-                      </h3>
-                      
-                      {contactNumbersData.nriPhoneBankingSection.subsections?.map((subsection, subIdx) => (
-                        <div key={subIdx} className={subIdx > 0 ? "" : "mb-8"}>
-                          <h4 className="text-base font-medium text-gray-600 mb-3 flex items-center gap-2">
-                            {subIdx === 0 ? <Clock className="w-4 h-4 text-green-500" /> : <UserPlus className="w-4 h-4 text-blue-500" />}
-                            {subsection.title}
-                          </h4>
-                          <div className="overflow-x-auto">
-                            <table className="w-full text-[15px] border border-gray-200 rounded-lg">
-                              <thead className="bg-gray-50 text-gray-700 font-semibold">
-                                <tr>
-                                  {subsection.table?.headers?.map((header, idx) => (
-                                    <th key={idx} className="py-3 px-4 text-left">{header}</th>
-                                  ))}
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {subsection.table?.rows?.map((row, idx) => (
-                                  <tr key={idx} className={idx % 2 === 0 ? "bg-gray-50" : "bg-white"}>
-                                    {row.map((cell, cellIdx) => (
-                                      <td key={cellIdx} className="py-3 px-4">
-                                        {cellIdx === 0 ? (
-                                          <span className="text-gray-700 font-medium text-center">{cell}</span>
-                                        ) : cellIdx === 1 ? (
-                                          <span className="text-gray-800 font-medium">{cell}</span>
-                                        ) : (
-                                          <div className="flex items-center justify-between gap-2">
-                                            <span className="text-blue-600 font-semibold text-[14px] break-all">{cell}</span>
-                                            <button
-                                              onClick={() => copyToClipboard(cell)}
-                                              title="Copy"
-                                              className="hover:text-blue-500 flex-shrink-0"
-                                            >
-                                              <Copy className="w-4 h-4" />
-                                            </button>
-                                          </div>
-                                        )}
-                                      </td>
-                                    ))}
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Missed Call Service */}
-                    <div className="bg-white rounded-xl h-fit shadow p-6">
-                      <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                        <Phone className="w-5 h-5 text-blue-600" /> {contactNumbersData.missedCallServiceSection.heading?.text || "Missed Call Service"}
-                      </h3>
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-[15px] text-left">
-                          <thead className="bg-gray-100 text-gray-700 font-semibold">
-                            <tr>
-                              {contactNumbersData.missedCallServiceSection.table?.headers?.map((header, idx) => (
-                                <th key={idx} className="py-2 px-3">{header}</th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {contactNumbersData.missedCallServiceSection.table?.rows?.map((row, idx) => (
-                              <tr
-                                key={idx}
-                                className={idx % 2 === 0 ? "bg-gray-50" : ""}
+                  {/* Other Emails */}
+                  <div className="bg-white rounded-xl shadow p-6 overflow-x-auto">
+                    <h3 className="text-xl font-bold text-gray-800 mb-4">
+                      Other Emails
+                    </h3>
+                    <table className="min-w-full text-sm text-left table-auto">
+                      <thead className="bg-gray-100 text-gray-700 font-semibold">
+                        <tr>
+                          <th className="py-2 px-3">Sr No.</th>
+                          <th className="py-2 px-3">Services</th>
+                          <th className="py-2 px-3">Email Address</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {[
+                          [
+                            "General Head",
+                            "socialreply@sbi.co.in, gm.customer@sbi.co.in",
+                          ],
+                          [
+                            "Aadhaar Seeding",
+                            "nodalofficer.aadhaarseeding@sbi.co.in",
+                          ],
+                          ["Home Loan", "customercare.homeloans@sbi.co.in"],
+                          [
+                            "To block your card",
+                            "unauthorisedtransaction@sbi.co.in",
+                          ],
+                          [
+                            "To report any cyber incident",
+                            "report.phishing@sbi.co.in",
+                          ],
+                          [
+                            "For Home Loan Query",
+                            "customercare.homeloans@sbi.co.in",
+                          ],
+                        ].map(([service, email], idx) => (
+                          <tr
+                            key={service}
+                            className={idx % 2 === 0 ? "bg-gray-50" : ""}
+                          >
+                            <td className="py-2 px-3 text-gray-700">{idx + 1}</td>
+                            <td className="py-2 px-3 text-gray-800">{service}</td>
+                            <td className="py-2 px-3 text-blue-700 font-semibold whitespace-nowrap flex items-center gap-1">
+                              {email}
+                              <button
+                                onClick={() => copyToClipboard(email)}
+                                title="Copy"
+                                className="hover:text-blue-500"
                               >
-                                {row.map((cell, cellIdx) => (
-                                  <td key={cellIdx} className="py-2 px-3">
-                                    {cellIdx === 0 ? (
-                                      <span className="text-gray-700 text-center">{cell}</span>
-                                    ) : cellIdx === 1 ? (
-                                      <span className="text-gray-800">{cell}</span>
-                                    ) : (
-                                      <div className="flex items-center justify-between gap-2">
-                                        <span className="text-blue-700 text-[14px] font-semibold break-all">{cell}</span>
-                                        <button
-                                          onClick={() => copyToClipboard(cell)}
-                                          title="Copy"
-                                          className="hover:text-blue-500 flex-shrink-0"
-                                        >
-                                          <Copy className="w-4 h-4" />
-                                        </button>
-                                      </div>
-                                    )}
-                                  </td>
-                                ))}
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
+                                <Copy className="w-4 h-4" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
-                )}
+                </div>
 
                 {/* Comment Section */}
-                <CommentSection 
-                  pageId={`${categoryId}-${companySlug}`}
-                  pageType="company"
-                />
-              </div>
-              {/* Sidebar: Customer Care List */}
-              {contactNumbersData?.customerCareListSection && (
-                <aside className="hidden lg:block">
-                  <div className="sticky top-24">
-                    <div className="bg-white rounded-2xl shadow-lg border border-gray-200 max-w-[260px] w-full">
-                      <div className="bg-blue-700 rounded-t-2xl px-4 py-3">
-                        <h3 className="text-white text-lg font-bold text-center">{contactNumbersData.customerCareListSection.heading?.text || "Customer Care List"}</h3>
-                      </div>
-                      <ul className="divide-y divide-gray-100">
-                        {contactNumbersData.customerCareListSection.links?.map(link => (
-                          <li key={link.name}>
-                            <a
-                              href={link.href}
-                              className="block px-4 py-2 text-blue-700 hover:bg-blue-100 hover:text-blue-900 transition-colors text-sm font-medium w-full"
-                            >
-                              {link.name}
-                            </a>
-                          </li>
-                        ))}
-                      </ul>
+                <div className="mt-8 bg-white rounded-xl shadow p-6">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
+                      <MessageSquare className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-900">Comments & Feedback</h3>
+                      <p className="text-sm text-gray-600">Share your experience or ask questions</p>
                     </div>
                   </div>
-                </aside>
-              )}
+
+                  {/* Comment Form */}
+                  <div className="mb-6">
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 border border-blue-200">
+                        <User className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <div className="flex-1">
+                        <textarea
+                          placeholder="Share your thoughts, ask questions, or provide feedback..."
+                          className="w-full p-4 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-all bg-blue-50/30 text-gray-800 placeholder-gray-400 resize-none shadow-sm"
+                          rows="3"
+                        />
+                        <div className="flex items-center justify-between mt-3">
+                          <div className="flex items-center gap-4">
+                            <button className="flex items-center gap-2 text-sm text-gray-500 hover:text-blue-600 transition-colors px-2 py-1 rounded-lg hover:bg-blue-50">
+                              <Paperclip className="h-4 w-4" />
+                              Attach file
+                            </button>
+                          </div>
+                          <button className="px-6 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition-colors font-medium">
+                            Post Comment
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Comments List */}
+                  <div className="space-y-4">
+                    {/* Sample Comment */}
+                    <div className="border border-gray-200 rounded-xl p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                          <span className="text-sm font-semibold text-green-700">JD</span>
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-gray-900">John Doe</span>
+                              <span className="text-xs text-gray-500">2 hours ago</span>
+                            </div>
+                            <div className="relative">
+                              <button 
+                                className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                                onClick={() => setOpenDropdown(openDropdown === 'comment1' ? null : 'comment1')}
+                              >
+                                <MoreHorizontal className="h-4 w-4 text-gray-500" />
+                              </button>
+                              {openDropdown === 'comment1' && (
+                                <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-10 min-w-[120px]">
+                                  <button 
+                                    className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
+                                    onClick={() => {
+                                      // Handle delete comment 1
+                                      setOpenDropdown(null);
+                                    }}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                    Delete
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <p className="text-gray-700 mb-3">
+                            The missed call service is really helpful! I used it to check my balance and it worked perfectly. Great service from HDFC Bank.
+                          </p>
+                          <div className="flex items-center gap-4">
+                            <button className="flex items-center gap-1 text-sm text-gray-600 hover:text-blue-600 transition-colors">
+                              <ThumbsUp className="h-4 w-4" />
+                              <span>12</span>
+                            </button>
+                            <button className="text-sm text-gray-600 hover:text-blue-600 transition-colors">
+                              Reply
+                            </button>
+                            <button className="text-sm text-gray-600 hover:text-red-600 transition-colors">
+                              Report
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Another Sample Comment */}
+                    <div className="border border-gray-200 rounded-xl p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                          <span className="text-sm font-semibold text-purple-700">SM</span>
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-gray-900">Sarah Miller</span>
+                              <span className="text-xs text-gray-500">1 day ago</span>
+                            </div>
+                            <div className="relative">
+                              <button 
+                                className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                                onClick={() => setOpenDropdown(openDropdown === 'comment2' ? null : 'comment2')}
+                              >
+                                <MoreHorizontal className="h-4 w-4 text-gray-500" />
+                              </button>
+                              {openDropdown === 'comment2' && (
+                                <div className="absolute right-0 top-8 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-10 min-w-[120px]">
+                                  <button 
+                                    className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
+                                    onClick={() => {
+                                      // Handle delete comment 2
+                                      setOpenDropdown(null);
+                                    }}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                    Delete
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <p className="text-gray-700 mb-3">
+                            I had an issue with my home loan application. The email support team responded quickly and helped me resolve the problem. Very satisfied with the service!
+                          </p>
+                          <div className="flex items-center gap-4">
+                            <button className="flex items-center gap-1 text-sm text-gray-600 hover:text-blue-600 transition-colors">
+                              <ThumbsUp className="h-4 w-4" />
+                              <span>8</span>
+                            </button>
+                            <button className="text-sm text-gray-600 hover:text-blue-600 transition-colors">
+                              Reply
+                            </button>
+                            <button className="text-sm text-gray-600 hover:text-red-600 transition-colors">
+                              Report
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Load More Comments */}
+                    <div className="text-center pt-4">
+                      <button className="text-blue-600 hover:text-blue-700 font-medium">
+                        Load more comments
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {/* Sidebar: Customer Care List */}
+              <aside className="hidden lg:block">
+                <div className="sticky top-24">
+                  <div className="bg-white rounded-2xl shadow-lg border border-gray-200 max-w-[260px] w-full">
+                    <div className="bg-blue-700 rounded-t-2xl px-4 py-3">
+                      <h3 className="text-white text-lg font-bold text-center">Customer Care List</h3>
+                    </div>
+                    <ul className="divide-y divide-gray-100">
+                      {[
+                        { name: 'SBI Customer Care', href: '/category/banking/private-banks/sbi-bank/contactnumber' },
+                        { name: 'Axis Bank Customer Care', href: '#' },
+                        { name: 'Union Bank of India Customer Care', href: '#' },
+                        { name: 'ICICI Bank Customer Care', href: '#' },
+                        { name: 'Standard Chartered Customer Care', href: '#' },
+                        { name: 'Kotak Mahindra Bank Customer Care', href: '#' },
+                        { name: 'Indian Bank Customer Care', href: '#' },
+                        { name: 'Bank of India Customer Care', href: '#' },
+                        { name: 'Bank of Maharashtra Customer Care', href: '#' },
+                        { name: 'IndusInd Bank Customer Care', href: '#' },
+                        { name: 'Punjab National Bank Customer Care', href: '#' },
+                      ].map(link => (
+                        <li key={link.name}>
+                          <a
+                            href={link.href}
+                            className="block px-4 py-2 text-blue-700 hover:bg-blue-100 hover:text-blue-900 transition-colors text-sm font-medium w-full"
+                          >
+                            {link.name}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </aside>
             </div>
           </div>
         )}
@@ -1874,6 +2361,14 @@ const CompanyPage = () => {
                 <Users className="h-6 w-6 text-orange-500" />
                 <span className="font-medium">Trusted by Millions</span>
               </div>
+            </div>
+            <div className="text-sm text-gray-500 font-medium">
+              Last verified:{" "}
+              {new Date().toLocaleDateString("en-IN", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
             </div>
           </div>
         </div>

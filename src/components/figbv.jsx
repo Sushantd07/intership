@@ -625,7 +625,7 @@ const StatewiseSection = () => {
                   <div key={i} className="bg-white rounded-xl p-4 shadow-sm border border-orange-200">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                        <Icon className="h-5 w-5 text-orange-600" />
+                        <Icon className="h-5 w-5 text-orange-600 bg-transparent" style={{ background: 'none' }} />
                       </div>
                       <div>
                         <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
@@ -641,7 +641,7 @@ const StatewiseSection = () => {
               onClick={handleRedirect}
               className="group bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 flex items-center gap-3"
             >
-              Browse State Directory <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              Browse State Directory <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform bg-transparent" style={{ background: 'none' }} />
             </button>
           </div>
 

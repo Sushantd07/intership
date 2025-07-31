@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import SnameMap from '../assets/lastMap.svg?react';
+import FinalMap from '../assets/Final_Map.svg?react';
 import { MapPin, ArrowRight, Users, Shield, Phone } from 'lucide-react';
 
 const statesData = [
@@ -534,149 +534,133 @@ const stats = [
   { icon: Users, label: 'Daily Searches', value: '50K+' }
 ];
 
-// Helper: Map svgId to state id
-const svgIdToStateId = Object.fromEntries(statesData.map(s => [s.svgId, s.id]));
-
-// SVG Map Wrapper to inject hover handlers
-const InteractiveMap = ({ onStateHover, onStateLeave }) => {
-  return (
-    <SnameMap
-      style={{ width: '100%', maxWidth: 530, maxHeight: 550, objectFit: 'contain', display: 'block' }}
-      onMouseLeave={onStateLeave}
-      // @ts-ignore
-      ref={node => {
-        if (!node) return;
-        // Attach listeners only once
-        if (node.__listenersAttached) return;
-        node.__listenersAttached = true;
-        // Find all regions by id
-        Object.keys(svgIdToStateId).forEach(svgId => {
-          const region = node.querySelector(`#${svgId}`);
-          if (region) {
-            region.style.cursor = 'pointer';
-            region.addEventListener('mouseenter', () => {
-              console.log('Hovered:', svgIdToStateId[svgId]);
-              onStateHover(svgIdToStateId[svgId]);
-            });
-            region.addEventListener('mouseleave', onStateLeave);
-          }
-        });
-      }}
-    />
-  );
-};
-
 const StatewiseSection = () => {
   const [hoveredState, setHoveredState] = useState(null);
-  const hoveredStateData = hoveredState ? statesData.find(s => s.id === hoveredState) : null;
+  const hoveredStateData = hoveredState
+    ? statesData.find((s) => s.id === hoveredState)
+    : null;
+
+  // Customizable crop amount for SVG map (in pixels)
+  const cropAmount = 15; // Change this value to crop more or less from the bottom
+  const visibleHeight = 520;
 
   return (
     <section className="py-10 bg-gradient-to-br from-orange-50 via-white to-orange-100">
-      {/* Section Header */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
-        <div className="flex flex-col items-center text-center">
-          <div className="inline-flex items-center gap-2 bg-orange-100 text-orange-700 px-4 py-2 rounded-full text-[15px] font-semibold mb-3">
-            <MapPin className="h-4 w-4" />
-            State Directory
-          </div>
-          <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3 leading-tight">
-            Find Numbers by <span className="text-orange-600">Indian States</span>
-          </h1>
-          <p className="text-lg md:text-lg text-gray-600 max-w-2xl mx-auto mb-2">
-            Access state-specific toll-free numbers, emergency services, and government helplines organized by location across India.
-          </p>
-          <div className="w-24 h-1 bg-orange-400 rounded-full mt-4 mb-2" />
-        </div>
-      </div>
-
-      {/* Card Container */}
-      <div className="max-w-9xl mx-auto px-2 sm:px-4 lg:px-8">
-        <div className="bg-white/90 rounded-3xl shadow-2xl border border-orange-200 overflow-hidden flex flex-col md:flex-row h-auto md:h-[600px]">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
+        <div className="bg-white/90 rounded-3xl shadow-2xl border border-orange-200 overflow-hidden flex flex-col md:flex-row h-auto">
           
-          {/* Left column */}
-          <div className="flex flex-col px-4 py-8 bg-gradient-to-b from-orange-50 to-white border-r border-orange-100 md:w-[335px] w-full">
-            {/* Intro */}
+          {/* Left Column */}
+          <div className="flex flex-col px-4 py-8 bg-gradient-to-b from-orange-50 to-white border-r border-orange-100 md:w-[350px] w-full">
             <div>
-              <h2 className="text-2xl font-bold text-orange-700 mb-3">View All Statewise Numbers</h2>
+              <h2 className="text-2xl font-bold text-orange-700 mb-3">
+                Statewise Emergency Contacts
+              </h2>
               <p className="text-gray-700 mb-4 text-base">
-                Browse the complete directory of helpline and emergency numbers for every Indian state and union territory.
+                Browse the up-to-date helpline and emergency numbers for every Indian state and union territory.
               </p>
               <a
                 href="/statewise-numbers"
                 className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-full font-semibold text-base shadow transition"
               >
-                <ArrowRight className="h-5 w-5" />
+                <ArrowRight className="h-5 w-5 bg-transparent" style={{ background: 'none' }} />
                 Browse Statewise Page
               </a>
             </div>
-
-            {/* Stats Container */}
             <div className="flex flex-wrap justify-center gap-5 my-7">
               {stats.map((s, idx) => (
-                <div key={idx} className="flex flex-col items-center text-center flex-1 min-w-[90px]">
+                <div
+                  key={idx}
+                  className="flex flex-col items-center text-center flex-1 min-w-[90px]"
+                >
                   <span className="text-xl font-bold text-orange-600">{s.value}</span>
                   <span className="text-gray-700 text-xs">{s.label}</span>
                 </div>
               ))}
             </div>
-
-            {/* Checklist */}
             <ul className="mt-3 space-y-2 text-gray-700 text-sm">
-              <li className="flex items-center gap-2"><span className="text-orange-500">✔</span> 100% verified numbers</li>
-              <li className="flex items-center gap-2"><span className="text-orange-500">✔</span> Updated monthly</li>
-              <li className="flex items-center gap-2"><span className="text-orange-500">✔</span> Covers all states & UTs</li>
-              <li className="flex items-center gap-2"><span className="text-orange-500">✔</span> Emergency & utility contacts</li>
+              <li className="flex items-center gap-2">
+                <span className="text-orange-500">✔</span> 100% verified numbers
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="text-orange-500">✔</span> Updated monthly
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="text-orange-500">✔</span> Covers all states & UTs
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="text-orange-500">✔</span> Emergency & utility contacts
+              </li>
             </ul>
           </div>
 
-          {/* Center column (SVG Map) */}
-          <div className="flex flex-col flex-1 bg-transparent p-3">
-            <h2 className="text-2xl font-bold text-orange-700 mb-4 text-center w-full">Indian States & UTs Emergency Map</h2>
-            <div className="flex-1 flex items-center justify-center">
-              <div
+          {/* Middle (Replaces '1' box with Heading and Bigger Map) */}
+          <div className="flex-1 px-2 py-8 flex flex-col items-center bg-gradient-to-b from-white to-orange-50 min-w-[400px]">
+            {/* Heading replacing the '1' box */}
+            <div className="w-full mb-2 flex items-center justify-center">
+              <h2 className="text-2xl md:text-3xl text-orange-700 font-extrabold text-center">
+                Indian States & UTs Emergency Map
+              </h2>
+            </div>
+            {/* Map Box - crop customizable amount from bottom using overflow hidden on parent */}
+            <div style={{ width: '100%', maxWidth: 520, height: visibleHeight, overflow: 'hidden', margin: '0 auto' }}>
+              <FinalMap
                 style={{
                   width: '100%',
-                  maxWidth: 530,
-                  maxHeight: 510,
-                  overflow: 'hidden',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: '100px',
+                  height: visibleHeight + cropAmount,
+                  maxWidth: 520,
+                  maxHeight: visibleHeight + cropAmount,
+                  display: 'block',
+                  background: 'none',
+                  margin: '0 auto',
                 }}
-              >
-                <InteractiveMap
-                  onStateHover={setHoveredState}
-                  onStateLeave={() => setHoveredState(null)}
-                />
-              </div>
+                onMouseLeave={() => setHoveredState(null)}
+              />
+            </div>
+            {/* Live Tip or Hint */}
+            <div className="mt-4 text-sm text-gray-700 text-center w-full">
+              <span>
+                <span className="font-bold text-orange-500">Tip:</span> Hover over a state on the map to see helpline details in the panel.
+              </span>
             </div>
           </div>
 
-          {/* Right column */}
-          <div className="flex flex-col justify-between items-center px-4 py-8 bg-gradient-to-b from-white to-orange-50 border-t md:border-t-0 md:border-l border-orange-100 md:w-[320px] w-full">
+          {/* Right Column */}
+          <div className="flex flex-col justify-between items-center px-4 py-8 bg-gradient-to-b from-white to-orange-50 border-t md:border-t-0 md:border-l border-orange-100 md:w-[350px] w-full">
             <div className="w-full max-w-xs bg-white rounded-2xl shadow-lg p-6">
               <h2 className="text-xl font-bold mb-4 text-orange-700 sticky top-0 bg-white z-10">
-                {hoveredStateData ? `View ${hoveredStateData.name}` : 'View State'}
+                {hoveredStateData ? `Emergency Numbers: ${hoveredStateData.name}` : 'Select a State'}
               </h2>
               {hoveredStateData ? (
                 <>
+                  <img
+                    className="w-full h-32 object-cover rounded-md mb-3 border border-orange-100"
+                    src={hoveredStateData.image}
+                    alt={hoveredStateData.name}
+                  />
                   <table className="w-full text-sm border border-orange-200 rounded-lg overflow-hidden bg-white shadow">
                     <tbody>
                       {hoveredStateData.info.map((row, idx) => (
                         <tr key={idx} className="even:bg-orange-50">
-                          <td className="font-semibold pr-2 py-2 text-gray-700 w-1/2 border-b border-orange-100">{row.label}</td>
-                          <td className="py-2 text-gray-900 border-b border-orange-100">{row.value}</td>
+                          <td className="font-semibold pr-2 py-2 text-gray-700 w-1/2 border-b border-orange-100">
+                            {row.label}
+                          </td>
+                          <td className="py-2 text-gray-900 border-b border-orange-100">
+                            {row.value}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
-                  <p className="text-xs text-gray-500 mt-3">All numbers are regularly updated and verified for accuracy.</p>
+                  <p className="text-xs text-gray-500 mt-3">
+                    All numbers are regularly updated and verified for accuracy.
+                  </p>
                 </>
               ) : (
                 <>
                   <div className="flex flex-col items-center justify-center text-gray-400 mb-4">
-                    <svg className="w-12 h-12 mb-2" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2" /></svg>
+                    <svg className="w-12 h-12 mb-2" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2" />
+                    </svg>
                     <span>Hover over a state to see numbers</span>
                   </div>
                   <table className="w-full text-sm border border-orange-200 rounded-lg overflow-hidden bg-white shadow">
@@ -695,11 +679,15 @@ const StatewiseSection = () => {
                       ))}
                     </tbody>
                   </table>
-                  <p className="text-xs text-gray-500 mt-3">Browse a state to see all helpline and emergency numbers.</p>
+                  <p className="text-xs text-gray-500 mt-3">
+                    Browse a state to see all helpline and emergency numbers.
+                  </p>
                 </>
               )}
             </div>
+          
           </div>
+
         </div>
       </div>
     </section>

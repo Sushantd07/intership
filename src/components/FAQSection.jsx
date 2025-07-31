@@ -1,93 +1,160 @@
 import React, { useState } from 'react';
+import { ChevronDown, HelpCircle, Phone, Shield, Clock } from 'lucide-react';
 
 const faqs = [
   {
-    question: "How do I find a customer care number?",
-    answer: "Simply search by brand or category (e.g., Banking, Telecom, Shopping) and you'll see verified toll-free numbers instantly.\n\n- No login required\n- Free for everyone\n- Works 24x7"
+    question: "What is India Customer Help?",
+    answer: "India Customer Help is a trusted directory for verified helpline numbers, emergency contacts, and customer support for businesses and services across India."
   },
   {
-    question: "Are these numbers verified?",
-    answer: "Yes, our team manually verifies each number from official brand websites and trusted sources."
+    question: "How do I find a helpline number for a company or service?",
+    answer: "Use our search bar or browse by category or state to quickly find verified helpline and customer support numbers for companies, government services, and more."
   },
   {
-    question: "Can I report a wrong number?",
-    answer: "Absolutely! Each listing has a 'Report' option. You can also email us at report@indiancustomerhelp.com."
+    question: "Are the numbers on India Customer Help verified?",
+    answer: "Yes, all numbers are regularly checked and verified by our team to ensure accuracy and reliability."
   },
   {
-    question: "Do you support all Indian brands?",
-    answer: "We currently support over 500+ brands across Telecom, Banking, Shopping, Healthcare, Travel, and more. New entries are added weekly."
+    question: "How can I report an incorrect or outdated number?",
+    answer: "If you find an incorrect or outdated number, please use the 'Report' button next to the listing or contact us directly. We appreciate your help in keeping our directory up to date!"
   },
   {
-    question: "Is this service free?",
-    answer: "Yes, Indian Customer Help is 100% free for users. No subscription, no sign-up needed."
+    question: "Is India Customer Help free to use?",
+    answer: "Yes, our platform is completely free for all users. You can access helpline numbers and emergency contacts without any charges."
+  },
+  // Added FAQs
+  {
+    question: "How quickly can I expect a response after submitting a query?",
+    answer: "Our support team strives to respond to all queries within 24 hours. For urgent issues, please use the phone number provided on our Contact page."
   },
   {
-    question: "Can I suggest a company to be added?",
-    answer: "Yes! Use our suggestion form or email support@indiancustomerhelp.com to recommend a missing brand."
+    question: "Can I request to add a new company or service to the directory?",
+    answer: "Yes! If you don't find a company or service listed, you can request its addition by contacting us through the form or email. Our team will review and update the directory accordingly."
   },
   {
-    question: "How often is the data updated?",
-    answer: "Our team updates toll-free numbers and support info every 7 days to ensure accuracy."
-  },
-  {
-    question: "Is there a mobile app available?",
-    answer: "A mobile app is currently under development and will be released soon for Android and iOS users."
-  },
+    question: "Is my personal information safe when I contact you?",
+    answer: "Absolutely. We use secure protocols and never share your information with third parties without your consent."
+  }
+];
+
+const features = [
+  { icon: Shield, title: "100% Verified", desc: "All numbers verified regularly" },
+  { icon: Clock, title: "24/7 Access", desc: "Available round the clock" },
+  { icon: Phone, title: "Instant Connect", desc: "Direct calling support" }
 ];
 
 const FAQSection = () => {
   const [openIndex, setOpenIndex] = useState(null);
 
   return (
-    <section className="max-w-7xl mx-auto py-20 px-4 md:px-8">
-      <div className="flex flex-col md:flex-row gap-12 md:gap-0">
-        {/* Left: Heading, Description, Button */}
-        <div className="md:w-[38%] flex flex-col justify-start mb-10 md:mb-0">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4 leading-tight">
-            Helping you connect with brands faster
-          </h2>
-          <p className="text-gray-600 text-base md:text-lg mb-8">
-            Indian Customer Help is your go-to directory for verified toll-free numbers of major Indian companies. Whether it's a refund, complaint, or general support — we've got you covered.
-          </p>
-          <button className="bg-purple-600 hover:bg-purple-700 text-white font-semibold px-8 py-3 rounded-md text-base shadow-md transition-colors w-fit">
-            BROWSE DIRECTORY
-          </button>
-        </div>
-        {/* Right: FAQ Accordion */}
-        <div className="md:w-[62%] flex flex-col gap-2">
-          {faqs.map((faq, idx) => {
-            const isOpen = openIndex === idx;
-            return (
-              <div key={idx} className="border-b border-gray-200 last:border-b-0">
-                <button
-                  className={`w-full flex items-center justify-between py-5 px-2 md:px-6 text-left focus:outline-none transition-colors ${isOpen ? 'font-bold text-gray-900' : 'text-purple-700 font-semibold hover:text-purple-900'}`}
-                  onClick={() => setOpenIndex(isOpen ? null : idx)}
-                >
-                  <span className="text-base md:text-lg">{faq.question}</span>
-                  <span className={`ml-4 flex items-center justify-center rounded-full border-2 border-purple-300 w-8 h-8 transition-colors ${isOpen ? 'bg-purple-600 border-purple-600' : 'bg-white'}`}>
-                    <span className={`text-2xl font-bold transition-transform ${isOpen ? 'text-white rotate-45' : 'text-purple-600'}`}>+</span>
-                  </span>
-                </button>
-                {isOpen && (
-                  <div className="pl-2 md:pl-6 pb-6 text-gray-700 text-sm md:text-base animate-fadeIn">
-                    {faq.answer.split('\n').map((line, i) =>
-                      line.trim().startsWith('-') ? (
-                        <li key={i} className="ml-6 list-disc">{line.replace('-', '').trim()}</li>
-                      ) : (
-                        <p key={i} className="mb-2">{line}</p>
-                      )
-                    )}
-                  </div>
-                )}
+    <section className="relative py-24 bg-gradient-to-br from-orange-50/50 via-white to-rose-50/30 overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(251,146,60,0.1),transparent_50%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(249,115,22,0.08),transparent_50%)]" />
+      
+      <div className="relative max-w-7xl mx-auto px-4 md:px-8">
+        <div className="grid lg:grid-cols-2 gap-16 lg:gap-20 items-start">
+          
+          <div className="space-y-8">
+            <div className="space-y-6">
+              <div className="inline-flex items-center gap-3 bg-gradient-to-r from-orange-100 to-orange-200 text-orange-700 px-5 py-3 rounded-full text-sm font-semibold shadow-sm">
+                <HelpCircle className="w-4 h-4" />
+                Frequently Asked Questions
               </div>
-            );
-          })}
+              
+              <h2 className="text-4xl lg:text-4xl font-black text-gray-900 leading-tight">
+                Your Trusted Source for 
+                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-rose-600">
+                  Customer Helplines
+                </span>
+              </h2>
+              
+              <p className="text-lg text-gray-600 leading-relaxed max-w-lg">
+                Find verified helpline numbers, emergency contacts, and customer support for companies and services across India. Our mission is to make help accessible, reliable, and easy to find for everyone.
+              </p>
+            </div>
+
+            {/* <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              {features.map((feature, idx) => (
+                <div key={idx} className="group p-6 bg-white/80 backdrop-blur-sm rounded-2xl border border-orange-100 hover:border-orange-200 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                  <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-rose-500 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <feature.icon className="w-6 h-6 text-white" />
+                  </div>
+                  <h3 className="font-bold text-gray-900 mb-2">{feature.title}</h3>
+                  <p className="text-sm text-gray-600">{feature.desc}</p>
+                </div>
+              ))}
+            </div> */}
+
+            <div className="pt-4">
+              <a 
+                href="/contact" 
+                className="group inline-flex items-center gap-3 bg-gradient-to-r from-orange-600 to-rose-600 hover:from-orange-700 hover:to-rose-700 text-white font-bold px-8 py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+              >
+                <Phone className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" />
+                Contact Support
+              </a>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-5 shadow-xl border border-orange-100">
+              <div className="space-y-3">
+                {faqs.map((faq, idx) => {
+                  const isOpen = openIndex === idx;
+                  return (
+                    <div 
+                      key={idx} 
+                      className={`rounded-2xl border transition-all duration-300 overflow-hidden ${
+                        isOpen 
+                          ? 'bg-gradient-to-r from-orange-50 to-rose-50 border-orange-200 shadow-md' 
+                          : 'bg-white/80 border-gray-200 hover:border-orange-200 hover:shadow-sm'
+                      }`}
+                    >
+                      <button
+                        className={`w-full flex items-center justify-between py-4 px-4 text-left focus:outline-none transition-all duration-300 ${
+                          isOpen ? 'text-orange-700' : 'text-gray-800 hover:text-orange-600'
+                        }`}
+                        onClick={() => setOpenIndex(isOpen ? null : idx)}
+                        aria-expanded={isOpen}
+                        aria-controls={`faq-panel-${idx}`}
+                      >
+                        <span className="text-lg font-semibold pr-4">{faq.question}</span>
+                        <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
+                          isOpen 
+                            ? 'bg-gradient-to-r from-orange-500 to-rose-500 shadow-lg' 
+                            : 'bg-gray-100 hover:bg-orange-100'
+                        }`}>
+                          <ChevronDown 
+                            className={`w-5 h-5 transition-all duration-300 ${
+                              isOpen ? 'rotate-180 text-white' : 'text-gray-600'
+                            }`}
+                          />
+                        </div>
+                      </button>
+                      
+                      <div
+                        id={`faq-panel-${idx}`}
+                        className={`px-6 transition-all duration-300 ease-in-out ${
+                          isOpen 
+                            ? 'max-h-96 pb-6 opacity-100' 
+                            : 'max-h-0 overflow-hidden opacity-0'
+                        }`}
+                        aria-hidden={!isOpen}
+                      >
+                        <div className="pt-2 pb-2">
+                          <p className="text-gray-700 leading-relaxed">
+                            {faq.answer}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      <style>{`
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fadeIn { animation: fadeIn 0.2s ease; }
-      `}</style>
     </section>
   );
 };

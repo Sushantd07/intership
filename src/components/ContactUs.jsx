@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Mail, Phone, MapPin, Clock, Send, User, Building2,
-  MessageSquare, ArrowRight, Shield, CheckCircle, Globe
+  Mail, Phone, MapPin, Send, User, Building2,
+  CheckCircle, Globe, ArrowRight
 } from 'lucide-react';
 
 const ContactUs = () => {
@@ -14,6 +14,7 @@ const ContactUs = () => {
     subject: '',
     message: ''
   });
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
@@ -25,29 +26,43 @@ const ContactUs = () => {
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    setIsSubmitting(false);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setIsSubmitting(true);
+
+  const form = new FormData();
+  form.append('access_key', 'bc0eca29-2292-42cf-af3d-e99d3591135f');
+  form.append('name', formData.name);
+  form.append('email', formData.email);
+  form.append('phone', formData.phone);
+  form.append('company', formData.company);
+  form.append('subject', formData.subject);
+  form.append('message', formData.message);
+  form.append('from_name', 'Mission Control');
+
+  const response = await fetch('https://api.web3forms.com/submit', {
+    method: 'POST',
+    body: form
+  });
+
+  const result = await response.json();
+
+  if (result.success) {
     setIsSubmitted(true);
-    
-    // Reset form after 3 seconds
-    setTimeout(() => {
-      setIsSubmitted(false);
-      setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        company: '',
-        subject: '',
-        message: ''
-      });
-    }, 3000);
-  };
+    setFormData({
+      name: '',
+      email: '',
+      phone: '',
+      company: '',
+      subject: '',
+      message: ''
+    });
+  }
+
+  setIsSubmitting(false);
+  setTimeout(() => setIsSubmitted(false), 3000);
+};
+
 
   const contactInfo = [
     {
@@ -87,31 +102,23 @@ const ContactUs = () => {
   ];
 
   return (
-    <section className="py-16 bg-gradient-to-b from-[#F5F7FA] to-white">
+    <section className="py-8 bg-gradient-to-b from-[#F5F7FA] to-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-16"
-        >
-          <div className="inline-flex items-center gap-2 bg-orange-100 text-orange-700 px-4 py-2 rounded-full text-sm font-medium mb-4">
-            <MessageSquare className="h-4 w-4" />
-            Get In Touch
+        <div className="text-center mb-8 flex flex-col items-center">
+          <div className="inline-flex items-center gap-2 bg-orange-100 text-orange-700 px-4 py-2 rounded-full text-[15px] font-semibold mb-4 shadow-sm">
+            <Mail className="h-4 w-4" />
+            Contact Directory
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            We're Here to <span className="text-orange-600">Help You</span>
-          </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Have questions about our directory services? Need help with business listing? 
-            Our dedicated support team is ready to assist you.
+          <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-2">
+            Get in Touch with Our <span className="text-orange-600">Contact Us</span>
+          </h1>
+          <p className="text-base text-gray-600 max-w-2xl mx-auto mb-2">
+            Reach out for business listings, support, or general queries. Our team is here to help you.
           </p>
-        </motion.div>
+          <div className="w-20 h-1 bg-orange-500 rounded-full mt-1 mb-1" />
+        </div>
 
         <div className="grid lg:grid-cols-3 gap-12">
-          {/* Contact Information */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -121,7 +128,6 @@ const ContactUs = () => {
           >
             <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
               <h3 className="text-2xl font-bold text-gray-900 mb-6">Contact Information</h3>
-              
               <div className="space-y-6">
                 {contactInfo.map((item, index) => {
                   const Icon = item.icon;
@@ -146,26 +152,9 @@ const ContactUs = () => {
                   );
                 })}
               </div>
-
-              {/* Trust Indicators */}
-              {/* <div className="mt-8 pt-6 border-t border-gray-200">
-                <div className="flex items-center gap-3 text-sm text-gray-600 mb-3">
-                  <Shield className="h-4 w-4 text-green-500" />
-                  <span>Your data is secure and encrypted</span>
-                </div>
-                <div className="flex items-center gap-3 text-sm text-gray-600 mb-3">
-                  <Clock className="h-4 w-4 text-blue-500" />
-                  <span>Quick response guaranteed</span>
-                </div>
-                <div className="flex items-center gap-3 text-sm text-gray-600">
-                  <CheckCircle className="h-4 w-4 text-orange-500" />
-                  <span>Trusted by 10M+ users</span>
-                </div>
-              </div> */}
             </div>
           </motion.div>
 
-          {/* Contact Form */}
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -177,19 +166,15 @@ const ContactUs = () => {
               {!isSubmitted ? (
                 <>
                   <h3 className="text-2xl font-bold text-gray-900 mb-6">Send us a Message</h3>
-                  
                   <form onSubmit={handleSubmit} className="space-y-6">
-                    {/* Name and Email Row */}
+                    <input type="hidden" name="from_name" value="India Customer Help" />
                     <div className="grid md:grid-cols-2 gap-6">
                       <div>
-                        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                          Full Name *
-                        </label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
                         <div className="relative">
                           <User className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                           <input
                             type="text"
-                            id="name"
                             name="name"
                             required
                             value={formData.name}
@@ -199,16 +184,12 @@ const ContactUs = () => {
                           />
                         </div>
                       </div>
-                      
                       <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                          Email Address *
-                        </label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
                         <div className="relative">
                           <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                           <input
                             type="email"
-                            id="email"
                             name="email"
                             required
                             value={formData.email}
@@ -220,17 +201,13 @@ const ContactUs = () => {
                       </div>
                     </div>
 
-                    {/* Phone and Company Row */}
                     <div className="grid md:grid-cols-2 gap-6">
                       <div>
-                        <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                          Phone Number
-                        </label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
                         <div className="relative">
                           <Phone className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                           <input
                             type="tel"
-                            id="phone"
                             name="phone"
                             value={formData.phone}
                             onChange={handleInputChange}
@@ -239,16 +216,12 @@ const ContactUs = () => {
                           />
                         </div>
                       </div>
-                      
                       <div>
-                        <label htmlFor="company" className="block text-sm font-medium text-gray-700 mb-2">
-                          Company/Organization
-                        </label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Company/Organization</label>
                         <div className="relative">
                           <Building2 className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                           <input
                             type="text"
-                            id="company"
                             name="company"
                             value={formData.company}
                             onChange={handleInputChange}
@@ -259,13 +232,9 @@ const ContactUs = () => {
                       </div>
                     </div>
 
-                    {/* Subject */}
                     <div>
-                      <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
-                        Subject *
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Subject *</label>
                       <select
-                        id="subject"
                         name="subject"
                         required
                         value={formData.subject}
@@ -279,13 +248,9 @@ const ContactUs = () => {
                       </select>
                     </div>
 
-                    {/* Message */}
                     <div>
-                      <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
-                        Message *
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Message *</label>
                       <textarea
-                        id="message"
                         name="message"
                         required
                         rows={5}
@@ -296,7 +261,6 @@ const ContactUs = () => {
                       />
                     </div>
 
-                    {/* Submit Button */}
                     <motion.button
                       type="submit"
                       disabled={isSubmitting}
@@ -319,7 +283,6 @@ const ContactUs = () => {
                   </form>
                 </>
               ) : (
-                // Success Message
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -332,18 +295,12 @@ const ContactUs = () => {
                   <p className="text-gray-600 mb-6">
                     Thank you for contacting us. We'll get back to you within 24 hours.
                   </p>
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <p className="text-green-800 text-sm">
-                      <strong>What's next?</strong> Our support team will review your message and respond promptly with the information you need.
-                    </p>
-                  </div>
                 </motion.div>
               )}
             </div>
           </motion.div>
         </div>
 
-        {/* Bottom CTA */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -351,22 +308,7 @@ const ContactUs = () => {
           transition={{ duration: 0.6, delay: 0.3 }}
           className="text-center mt-16"
         >
-          <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl p-8 text-white">
-            <h3 className="text-2xl font-bold mb-4">Need Immediate Assistance?</h3>
-            <p className="text-orange-100 mb-6 max-w-2xl mx-auto">
-              For urgent queries or immediate support, you can reach our customer service team directly.
-            </p>
-            <motion.a
-              href="tel:+91-1800-123-4567"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="inline-flex items-center gap-2 bg-white text-orange-600 font-semibold px-6 py-3 rounded-lg hover:bg-orange-50 transition-colors"
-            >
-              <Phone className="h-5 w-5" />
-              Call Now: +91-1800-123-4567
-              <ArrowRight className="h-4 w-4" />
-            </motion.a>
-          </div>
+        
         </motion.div>
       </div>
     </section>

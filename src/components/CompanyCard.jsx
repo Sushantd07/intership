@@ -11,7 +11,7 @@ const CompanyCard = ({
   return (
     <div className={className}>
       <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2 mb-4">
-        <Icon className={`w-5 h-5 ${iconColor}`} /> 
+        <Icon className={`w-5 h-5 ${iconColor} bg-transparent`} style={{ background: 'none' }} /> 
         {title}
       </h3>
       {children}

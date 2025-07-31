@@ -16,8 +16,9 @@ import Chatbot from './components/Chatbot.jsx';
 import AllCategories from './pages/AllCategories.jsx';
 import CategoryPage from './pages/CategoryPage.jsx';
 import CompanyPage from './pages/CompanyPage.jsx';
-import StateWiseSection from './components/StateWiseSection.jsx';
+import StateWiseSection from './components/StateWiseSection';
 import MaharashtraHelplinePage from './pages/MaharashtraHelpline';
+import AboutUs from './pages/AboutUs.jsx';
 
 function App() {
   return (
@@ -38,6 +39,9 @@ function App() {
           </>
         } />
 
+        {/* About Us Page */}
+        <Route path="/about" element={<AboutUs />} />
+
         {/* All Categories Page */}
         <Route path="/category" element={<AllCategories />} />
 
@@ -56,8 +60,8 @@ function App() {
 
         {/* Company Page - fallback for old route (if needed) */}
         <Route path="/category/:categoryId/:companySlug" element={<CompanyPage />} />
-        {/* <Route path="/home/state-wise" lelement={<StateWiseCreative />} /> */}
-        <Route path="/home/state-wise/maharashtra" element={<MaharashtraHelplinePage />} />
+        {/* <Route path="/home/state-wise" element={<StateWiseCreative />} /> */}
+        {/* <Route path="/home/state-wise/maharashtra" element={<MaharashtraHelplinePage />} /> */}
       </Routes>
 <Chatbot/>
       <Footer />

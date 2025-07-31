@@ -407,7 +407,7 @@ const HeroSection = () => {
                       >
                         {/* Circular Icon */}
                         <div className={`w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r ${currentCategory.color} rounded-full flex items-center justify-center mb-2 mx-auto shadow-lg group-hover:shadow-xl transition-shadow`}>
-                          <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                          <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-white bg-transparent" style={{ background: 'none' }} />
                         </div>
                         
                         {/* Service Name */}

@@ -373,7 +373,7 @@ const HeroSection = () => {
               aria-label="Voice Search"
               tabIndex={0}
             >
-              <Mic className={`h-5 w-5 ${isHelpListening ? 'animate-pulse' : ''}`} />
+              <Mic className={`h-5 w-5 ${isHelpListening ? 'animate-pulse' : ''} bg-transparent`} style={{ background: 'none' }} />
             </button>
           </div>
           <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-orange-200 scrollbar-track-transparent bg-gradient-to-b from-[#fff] to-[#fdf7ed]">
@@ -465,13 +465,13 @@ const HeroSection = () => {
           {/* Trust Badges */}
           <div className="flex flex-wrap gap-4 mb-6 text-sm">
             <div className="flex items-center gap-2 bg-gray-100 px-4 py-2 rounded-full text-gray-700">
-              <Shield className="h-4 w-4" /> Verified Data
+              <Shield className="h-4 w-4 text-orange-600 bg-transparent" style={{ background: 'none' }} /> Verified Data
             </div>
             <div className="flex items-center gap-2 bg-gray-100 px-4 py-2 rounded-full text-gray-700">
-              <Clock className="h-4 w-4" /> Updated Daily
+              <Clock className="h-4 w-4 text-blue-600 bg-transparent" style={{ background: 'none' }} /> Updated Daily
             </div>
             <div className="flex items-center gap-2 bg-gray-100 px-4 py-2 rounded-full text-gray-700">
-              <Users className="h-4 w-4" /> 10M+ Searches
+              <Users className="h-4 w-4 text-green-600 bg-transparent" style={{ background: 'none' }} /> 10M+ Searches
             </div>
           </div>
 
@@ -481,7 +481,7 @@ const HeroSection = () => {
   {/* Location Dropdown */}
   <div className="relative w-full md:w-[30%]">
     <div className="absolute left-3 top-3.5 text-orange-600">
-      <Globe className="h-5 w-5" />
+      <Globe className="h-5 w-5 bg-transparent" style={{ background: 'none' }} />
     </div>
     <input
       type="text"
@@ -492,8 +492,8 @@ const HeroSection = () => {
   </div>
 
   {/* Business Search Input */}
-  <div className="relative w-full md:w-[45%]">
-    <Building2 className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
+  <div className="relative w-full flex flex-col md:w-[45%]">
+    <Building2 className="absolute left-3 top-3.5 h-6 w-6 mb-4 text-orange-600 bg-transparent" style={{ background: 'none' }} />
     <input
       type="text"
       placeholder={`Search ${placeholderText}`}
@@ -509,7 +509,7 @@ const HeroSection = () => {
       aria-label="Voice Search"
       tabIndex={0}
     >
-      <Mic className={`h-5 w-5 ${isListening ? 'animate-pulse' : ''}`} />
+      <Mic className={`h-5 w-5 ${isListening ? 'animate-pulse' : ''} bg-transparent`} style={{ background: 'none' }} />
     </button>
   </div>
 
@@ -518,7 +518,7 @@ const HeroSection = () => {
     type="submit"
     className="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-lg transition-all w-full md:w-auto shadow-md hover:shadow-lg"
   >
-    <Search className="inline-block w-4 h-4 mr-2" />
+    <Search className="inline-block w-4 h-4 mr-2 bg-transparent" style={{ background: 'none' }} />
     Search
   </button>
 </form>
@@ -599,7 +599,7 @@ const HeroSection = () => {
                     >
                       {/* Circular Icon */}
                       <div className={`w-12 h-12 bg-gradient-to-r ${currentCategory.color} rounded-full flex items-center justify-center mb-2 mx-auto shadow-lg group-hover:shadow-xl transition-shadow`}>
-                        <Icon className="h-6 w-6 text-white" />
+                        <Icon className="h-6 w-6 text-white" style={{ background: 'none' }} />
                       </div>
                       
                       {/* Service Name */}

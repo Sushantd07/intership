@@ -4,17 +4,18 @@ import {
   Phone, Mail, MapPin, Globe, Facebook, Twitter, Instagram, Linkedin,
   Shield, Clock, Users, Building2, Heart, Star, ArrowRight, ExternalLink
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   const footerLinks = {
     company: [
-      { name: 'About Us', href: '#' },
+      { name: 'About Us', href: '/about', isInternal: true },
       { name: 'Our Mission', href: '#' },
       { name: 'Careers', href: '#' },
       { name: 'Press & Media', href: '#' },
-      { name: 'Contact Us', href: '#' }
+      { name: 'Contact Us', href: '/contact', isInternal: true }
     ],
     services: [
       { name: 'Business Directory', href: '#' },
@@ -47,9 +48,9 @@ const Footer = () => {
   ];
 
   const trustIndicators = [
-    { icon: Shield, text: '99.9% Verified Data', color: 'text-green-500' },
-    { icon: Clock, text: 'Updated Daily', color: 'text-blue-500' },
-    { icon: Users, text: '10M+ Trusted Users', color: 'text-orange-500' }
+    { icon: Shield, text: '99.9% Verified Data', color: 'text-green-500', iconProps: { className: 'bg-transparent', style: { background: 'none' } } },
+    { icon: Clock, text: 'Updated Daily', color: 'text-blue-500', iconProps: { className: 'bg-transparent', style: { background: 'none' } } },
+    { icon: Users, text: '10M+ Trusted Users', color: 'text-orange-500', iconProps: { className: 'bg-transparent', style: { background: 'none' } } }
   ];
 
   return (
@@ -157,13 +158,23 @@ const Footer = () => {
               <ul className="space-y-3">
                 {links.map((link, linkIndex) => (
                   <li key={linkIndex}>
-                    <a
-                      href={link.href}
-                      className="text-gray-400 hover:text-orange-500 transition-colors text-sm flex items-center gap-1 group"
-                    >
-                      {link.name}
-                      <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </a>
+                    {link.isInternal ? (
+                      <Link
+                        to={link.href}
+                        className="text-gray-400 hover:text-orange-500 transition-colors text-sm flex items-center gap-1 group"
+                      >
+                        {link.name}
+                        <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </Link>
+                    ) : (
+                      <a
+                        href={link.href}
+                        className="text-gray-400 hover:text-orange-500 transition-colors text-sm flex items-center gap-1 group"
+                      >
+                        {link.name}
+                        <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </a>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -171,38 +182,7 @@ const Footer = () => {
           ))}
         </div>
 
-        {/* Newsletter Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="mt-12 pt-8 border-t border-gray-800"
-        >
-          <div className="bg-gray-800 rounded-2xl p-6 md:p-8">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-              <div>
-                <h4 className="text-xl font-bold text-white mb-2">Stay Updated</h4>
-                <p className="text-gray-400">Get notified about new verified businesses and important updates.</p>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  className="px-4 py-3 rounded-lg border border-gray-700 bg-gray-900 text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none min-w-[250px]"
-                />
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-orange-700 transition-colors flex items-center gap-2"
-                >
-                  Subscribe
-                  <ExternalLink className="h-4 w-4" />
-                </motion.button>
-              </div>
-            </div>
-          </div>
-        </motion.div>
+       
 
         {/* Bottom Bar */}
         <motion.div
@@ -215,11 +195,7 @@ const Footer = () => {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-4 text-sm text-gray-400">
               <span>© {currentYear} Newmess Media. All rights reserved.</span>
-              <div className="flex items-center gap-1">
-                <span>Made with</span>
-                <Heart className="h-4 w-4 text-red-500" />
-                <span>in India</span>
-              </div>
+            
             </div>
             
             <div className="flex items-center gap-4">
