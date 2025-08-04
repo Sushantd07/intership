@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import {
   Search, Filter, ChevronRight,
@@ -33,13 +32,16 @@ const AllCategories = () => {
 useEffect(() => {
   const fetchCategories = async () => {
     try {
-      const response = await axios.get('/api/categories');
-      console.log('Categories from API:', response.data.data);
-
-      // 🔍 Log one category in detail to confirm subcategoryCount
-      console.log("Sample Category Object:", response.data.data[0]);
-
-      setCategories(response.data.data);
+      const response = await fetch('http://localhost:3000/api/categories');
+      const data = await response.json();
+      
+      if (data.success) {
+        console.log('Categories from API:', data.data);
+        console.log("Sample Category Object:", data.data[0]);
+        setCategories(data.data);
+      } else {
+        console.error('Failed to fetch categories:', data.message);
+      }
     } catch (error) {
       console.error('Failed to fetch categories:', error);
     }

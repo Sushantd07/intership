@@ -330,7 +330,7 @@ const Header = () => {
                 }}
               >
                 <button
-                  className="flex items-center text-base font-medium text-gray-800 hover:text-orange-600 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium"
                   onMouseEnter={() => {
                     setIsCategoriesOpen(true);
                     if (!hoveredCategory && categories.length > 0) {
@@ -340,7 +340,7 @@ const Header = () => {
                 >
                   All Categories
                   <ChevronDown
-                    className={`ml-1 h-4 w-4 transition-transform ${
+                    className={`ml-1 h-4 w-4 transition-transform text-white ${
                       isCategoriesOpen ? "rotate-180" : ""
                     }`}
                   />

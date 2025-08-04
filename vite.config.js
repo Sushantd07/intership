@@ -24,7 +24,7 @@ export default defineConfig({
     },
     hmr: {
       protocol: 'wss',
-      host: 'ff14071463db.ngrok-free.app', // ✅ Your Ngrok host
+      host: '381be5578ab9.ngrok-free.app', // ✅ Your Ngrok host
       port: 443, // ✅ Use 443 for HTTPS wss
     },
   },

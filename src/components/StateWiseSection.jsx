@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import SnameMap from '../assets/lastMap.svg?react';
-import { MapPin, ArrowRight, Users, Shield, Phone } from 'lucide-react';
+import { MapPin, ArrowRight, Users, Shield, Phone, Lock, Unlock } from 'lucide-react';
 
 const statesData = [
 	{
@@ -18,7 +18,7 @@ const statesData = [
 	},
 	{
 		id: 'delhi',
-		svgId: 'INDL',
+		svgId: 'Delhi',
 		name: 'Delhi',
 		image: 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=300&h=200&fit=crop',
 		info: [
@@ -31,7 +31,7 @@ const statesData = [
 	},
 	{
 		id: 'karnataka',
-		svgId: 'INKA',
+		svgId: 'Karnataka',
 		name: 'Karnataka',
 		image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=200&fit=crop',
 		info: [
@@ -44,7 +44,7 @@ const statesData = [
 	},
 	{
 		id: 'tamil_nadu',
-		svgId: 'INTN',
+		svgId: 'Tamil_Nadu',
 		name: 'Tamil Nadu',
 		image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=300&h=200&fit=crop',
 		info: [
@@ -57,7 +57,7 @@ const statesData = [
 	},
 	{
 		id: 'andhra_pradesh',
-		svgId: 'INAP',
+		svgId: 'Andhra_Pradesh',
 		name: 'Andhra Pradesh',
 		image: 'https://images.unsplash.com/photo-1583663848692-6b3f4764cf0b?fit=crop&w=300&h=200',
 		info: [
@@ -70,7 +70,7 @@ const statesData = [
 	},
 	{
 		id: 'arunachal_pradesh',
-		svgId: 'INAR',
+		svgId: 'Arunachal_Pradesh',
 		name: 'Arunachal Pradesh',
 		image: 'https://images.unsplash.com/photo-1625121342044-b3b94fd3f3b9?fit=crop&w=300&h=200',
 		info: [
@@ -83,7 +83,7 @@ const statesData = [
 	},
 	{
 		id: 'assam',
-		svgId: 'INAS',
+		svgId: 'Assam',
 		name: 'Assam',
 		image: 'https://images.unsplash.com/photo-1595847135932-27cba8e90d2b?fit=crop&w=300&h=200',
 		info: [
@@ -96,7 +96,7 @@ const statesData = [
 	},
 	{
 		id: 'bihar',
-		svgId: 'INBR',
+		svgId: 'Bihar',
 		name: 'Bihar',
 		image: 'https://images.unsplash.com/photo-1598003789764-2a6d5272ab6c?fit=crop&w=300&h=200',
 		info: [
@@ -109,7 +109,7 @@ const statesData = [
 	},
 	{
 		id: 'chhattisgarh',
-		svgId: 'INCJ',
+		svgId: 'Chhattisgarh',
 		name: 'Chhattisgarh',
 		image: 'https://images.unsplash.com/photo-1620733100472-27c87b8e76ae?fit=crop&w=300&h=200',
 		info: [
@@ -122,7 +122,7 @@ const statesData = [
 	},
 	{
 		id: 'goa',
-		svgId: 'INGA',
+		svgId: 'Goa',
 		name: 'Goa',
 		image: 'https://images.unsplash.com/photo-1601275802430-4b7b8d7932c0?fit=crop&w=300&h=200',
 		info: [
@@ -135,7 +135,7 @@ const statesData = [
 	},
 	{
 		id: 'gujarat',
-		svgId: 'INGJ',
+		svgId: 'Gujarat',
 		name: 'Gujarat',
 		image: 'https://images.unsplash.com/photo-1582721052784-4cc5df1944ec?fit=crop&w=300&h=200',
 		info: [
@@ -148,7 +148,7 @@ const statesData = [
 	},
 	{
 		id: 'haryana',
-		svgId: 'INHR',
+		svgId: 'Haryana',
 		name: 'Haryana',
 		image: 'https://images.unsplash.com/photo-1646792006724-3cf61c56d93f?fit=crop&w=300&h=200',
 		info: [
@@ -161,7 +161,7 @@ const statesData = [
 	},
 	{
 		id: 'himachal_pradesh',
-		svgId: 'INHP',
+		svgId: 'Himachal_Pradesh',
 		name: 'Himachal Pradesh',
 		image: 'https://images.unsplash.com/photo-1548013146-72479768bada?fit=crop&w=300&h=200',
 		info: [
@@ -174,7 +174,7 @@ const statesData = [
 	},
 	{
 		id: 'jharkhand',
-		svgId: 'INJH',
+		svgId: 'Jharkhand',
 		name: 'Jharkhand',
 		image: 'https://images.unsplash.com/photo-1580137189272-c9379b0f6d0a?fit=crop&w=300&h=200',
 		info: [
@@ -186,21 +186,8 @@ const statesData = [
 		]
 	},
 	{
-		id: 'karnataka',
-		svgId: 'INKA',
-		name: 'Karnataka',
-		image: 'https://images.unsplash.com/photo-1593951553463-e9ef97ed80ae?fit=crop&w=300&h=200',
-		info: [
-			{ label: 'CM Helpline', value: '1902' },
-			{ label: 'Electricity', value: '1912' },
-			{ label: 'Police', value: '100' },
-			{ label: 'Fire', value: '100' },
-			{ label: 'Ambulance', value: '108' }
-		]
-	},
-	{
 		id: 'kerala',
-		svgId: 'INKL',
+		svgId: 'Kerala',
 		name: 'Kerala',
 		image: 'https://images.unsplash.com/photo-1628164603882-80ae51cd74cc?fit=crop&w=300&h=200',
 		info: [
@@ -213,7 +200,7 @@ const statesData = [
 	},
 	{
 		id: 'madhya_pradesh',
-		svgId: 'INMP',
+		svgId: 'Madhya_Pradesh',
 		name: 'Madhya Pradesh',
 		image: 'https://images.unsplash.com/photo-1603701973586-2c2acacdb138?fit=crop&w=300&h=200',
 		info: [
@@ -225,21 +212,8 @@ const statesData = [
 		]
 	},
 	{
-		id: 'maharashtra',
-		svgId: 'INMH',
-		name: 'Maharashtra',
-		image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?fit=crop&w=300&h=200',
-		info: [
-			{ label: 'CM Helpline', value: '1800-222-111' },
-			{ label: 'Electricity', value: '1912' },
-			{ label: 'Police', value: '100' },
-			{ label: 'Fire', value: '101' },
-			{ label: 'Ambulance', value: '108' }
-		]
-	},
-	{
 		id: 'manipur',
-		svgId: 'INMN',
+		svgId: 'Manipur',
 		name: 'Manipur',
 		image: 'https://images.unsplash.com/photo-1582223151283-877dc7b2b8aa?fit=crop&w=300&h=200',
 		info: [
@@ -252,7 +226,7 @@ const statesData = [
 	},
 	{
 		id: 'meghalaya',
-		svgId: 'INML',
+		svgId: 'Meghalaya',
 		name: 'Meghalaya',
 		image: 'https://images.unsplash.com/photo-1608710449164-4a7cf6ea45fb?fit=crop&w=300&h=200',
 		info: [
@@ -265,7 +239,7 @@ const statesData = [
 	},
 	{
 		id: 'mizoram',
-		svgId: 'INMZ',
+		svgId: 'Mizoram',
 		name: 'Mizoram',
 		image: 'https://images.unsplash.com/photo-1616052488425-2a785b42abbb?fit=crop&w=300&h=200',
 		info: [
@@ -278,7 +252,7 @@ const statesData = [
 	},
 	{
 		id: 'nagaland',
-		svgId: 'INNL',
+		svgId: 'Nagaland',
 		name: 'Nagaland',
 		image: 'https://images.unsplash.com/photo-1617032023622-3859651d4623?fit=crop&w=300&h=200',
 		info: [
@@ -291,7 +265,7 @@ const statesData = [
 	},
 	{
 		id: 'odisha',
-		svgId: 'INOR',
+		svgId: 'Odisha',
 		name: 'Odisha',
 		image: 'https://images.unsplash.com/photo-1574169207510-8c4f5e6ffeb6?fit=crop&w=300&h=200',
 		info: [
@@ -304,7 +278,7 @@ const statesData = [
 	},
 	{
 		id: 'punjab',
-		svgId: 'INPB',
+		svgId: 'Punjab',
 		name: 'Punjab',
 		image: 'https://images.unsplash.com/photo-1606813817202-7ff21d7d011a?fit=crop&w=300&h=200',
 		info: [
@@ -317,7 +291,7 @@ const statesData = [
 	},
 	{
 		id: 'rajasthan',
-		svgId: 'INRJ',
+		svgId: 'Rajasthan',
 		name: 'Rajasthan',
 		image: 'https://images.unsplash.com/photo-1585155777343-92a6e7422db5?fit=crop&w=300&h=200',
 		info: [
@@ -330,7 +304,7 @@ const statesData = [
 	},
 	{
 		id: 'sikkim',
-		svgId: 'INSK',
+		svgId: 'Sikkim',
 		name: 'Sikkim',
 		image: 'https://images.unsplash.com/photo-1624110052441-d1f7d01f55cb?fit=crop&w=300&h=200',
 		info: [
@@ -342,21 +316,8 @@ const statesData = [
 		]
 	},
 	{
-		id: 'tamil_nadu',
-		svgId: 'INTN',
-		name: 'Tamil Nadu',
-		image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?fit=crop&w=300&h=200',
-		info: [
-			{ label: 'CM Helpline', value: '1100' },
-			{ label: 'Electricity', value: '1912' },
-			{ label: 'Police', value: '100' },
-			{ label: 'Fire', value: '100' },
-			{ label: 'Ambulance', value: '108' }
-		]
-	},
-	{
 		id: 'telangana',
-		svgId: 'INTG',
+		svgId: 'Telangana',
 		name: 'Telangana',
 		image: 'https://images.unsplash.com/photo-1600346025101-7c210c0cb2d4?fit=crop&w=300&h=200',
 		info: [
@@ -369,7 +330,7 @@ const statesData = [
 	},
 	{
 		id: 'tripura',
-		svgId: 'INTR',
+		svgId: 'Tripura',
 		name: 'Tripura',
 		image: 'https://images.unsplash.com/photo-1632445487276-d75db8579c8c?fit=crop&w=300&h=200',
 		info: [
@@ -382,7 +343,7 @@ const statesData = [
 	},
 	{
 		id: 'uttar_pradesh',
-		svgId: 'INUP',
+		svgId: 'Uttar_Pradesh',
 		name: 'Uttar Pradesh',
 		image: 'https://images.unsplash.com/photo-1594810909394-eae57a1808d5?fit=crop&w=300&h=200',
 		info: [
@@ -395,7 +356,7 @@ const statesData = [
 	},
 	{
 		id: 'uttarakhand',
-		svgId: 'INUT',
+		svgId: 'Uttarakhand',
 		name: 'Uttarakhand',
 		image: 'https://images.unsplash.com/photo-1612110806494-bc2b1e75c9cc?fit=crop&w=300&h=200',
 		info: [
@@ -408,7 +369,7 @@ const statesData = [
 	},
 	{
 		id: 'west_bengal',
-		svgId: 'INWB',
+		svgId: 'West_Bengal',
 		name: 'West Bengal',
 		image: 'https://images.unsplash.com/photo-1606464714196-c4cc6615f4fa?fit=crop&w=300&h=200',
 		info: [
@@ -422,13 +383,13 @@ const statesData = [
 
 	// Union Territories
 	{
-		id: 'delhi',
-		svgId: 'INDL',
-		name: 'Delhi',
-		image: 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?fit=crop&w=300&h=200',
+		id: 'chandigarh',
+		svgId: 'Chandigarh',
+		name: 'Chandigarh',
+		image: 'https://images.unsplash.com/photo-1606112219348-204d7d8b94ee?fit=crop&w=300&h=200',
 		info: [
-			{ label: 'CM Helpline', value: '1031' },
-			{ label: 'Electricity', value: '19123' },
+			{ label: 'CM Helpline', value: '112' },
+			{ label: 'Electricity', value: '1912' },
 			{ label: 'Police', value: '100' },
 			{ label: 'Fire', value: '101' },
 			{ label: 'Ambulance', value: '102' }
@@ -436,7 +397,7 @@ const statesData = [
 	},
 	{
 		id: 'jammu_kashmir',
-		svgId: 'INJK',
+		svgId: 'Jammu_and_Kashmir_disp',
 		name: 'Jammu & Kashmir',
 		image: 'https://images.unsplash.com/photo-1570696164395-426b7f3d5a70?fit=crop&w=300&h=200',
 		info: [
@@ -449,7 +410,7 @@ const statesData = [
 	},
 	{
 		id: 'ladakh',
-		svgId: 'INLA',
+		svgId: 'Ladakh_disp',
 		name: 'Ladakh',
 		image: 'https://images.unsplash.com/photo-1623160937084-9a4c55dc5986?fit=crop&w=300&h=200',
 		info: [
@@ -462,7 +423,7 @@ const statesData = [
 	},
 	{
 		id: 'andaman_nicobar',
-		svgId: 'INAN',
+		svgId: 'Andaman_and_Nicobar_Islands',
 		name: 'Andaman & Nicobar',
 		image: 'https://images.unsplash.com/photo-1608806307311-26c2c3f7926a?fit=crop&w=300&h=200',
 		info: [
@@ -474,21 +435,8 @@ const statesData = [
 		]
 	},
 	{
-		id: 'chandigarh',
-		svgId: 'INCH',
-		name: 'Chandigarh',
-		image: 'https://images.unsplash.com/photo-1606112219348-204d7d8b94ee?fit=crop&w=300&h=200',
-		info: [
-			{ label: 'CM Helpline', value: '112' },
-			{ label: 'Electricity', value: '1912' },
-			{ label: 'Police', value: '100' },
-			{ label: 'Fire', value: '101' },
-			{ label: 'Ambulance', value: '102' }
-		]
-	},
-	{
 		id: 'puducherry',
-		svgId: 'INPY',
+		svgId: 'Puducherry',
 		name: 'Puducherry',
 		image: 'https://images.unsplash.com/photo-1601034874029-3c04643f9e8f?fit=crop&w=300&h=200',
 		info: [
@@ -501,22 +449,9 @@ const statesData = [
 	},
 	{
 		id: 'dadra_nagar_haveli',
-		svgId: 'INDN',
+		svgId: 'Dadra_and_Nagar_Haveli_and_Daman_and_Diu',
 		name: 'Dadra & Nagar Haveli',
 		image: 'https://images.unsplash.com/photo-1543832977-85db68f1b4df?fit=crop&w=300&h=200',
-		info: [
-			{ label: 'CM Helpline', value: '100' },
-			{ label: 'Electricity', value: '1912' },
-			{ label: 'Police', value: '100' },
-			{ label: 'Fire', value: '101' },
-			{ label: 'Ambulance', value: '102' }
-		]
-	},
-	{
-		id: 'daman_diu',
-		svgId: 'INDD',
-		name: 'Daman & Diu',
-		image: 'https://images.unsplash.com/photo-1632445438965-e2d474e6ea9a?fit=crop&w=300&h=200',
 		info: [
 			{ label: 'CM Helpline', value: '100' },
 			{ label: 'Electricity', value: '1912' },
@@ -538,29 +473,127 @@ const stats = [
 const svgIdToStateId = Object.fromEntries(statesData.map(s => [s.svgId, s.id]));
 
 // SVG Map Wrapper to inject hover handlers
-const InteractiveMap = ({ onStateHover, onStateLeave }) => {
-  return (
-    <SnameMap
-      style={{ width: '100%', maxWidth: 530, maxHeight: 550, objectFit: 'contain', display: 'block' }}
-      onMouseLeave={onStateLeave}
-      // @ts-ignore
-      ref={node => {
-        if (!node) return;
-        // Attach listeners only once
-        if (node.__listenersAttached) return;
-        node.__listenersAttached = true;
-        // Find all regions by id
+const InteractiveMap = ({ onStateHover, onStateLeave, onStateClick, hoveredState, clickedState }) => {
+  const mapRef = useRef(null);
+
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    const node = mapRef.current;
+    
+    // Remove existing listeners
+    if (node.__listenersAttached) {
+      Object.keys(svgIdToStateId).forEach(svgId => {
+        const region = node.querySelector(`#${svgId}`);
+        if (region) {
+          region.removeEventListener('mouseenter', node[`__mouseenter_${svgId}`]);
+          region.removeEventListener('mouseleave', node[`__mouseleave_${svgId}`]);
+          region.removeEventListener('click', node[`__click_${svgId}`]);
+        }
+      });
+    }
+
+    // Attach new listeners
+    Object.keys(svgIdToStateId).forEach(svgId => {
+      const region = node.querySelector(`#${svgId}`);
+      if (region) {
+        region.style.cursor = 'pointer';
+        region.style.transition = 'all 0.3s ease';
+        
+        // Store function references for cleanup
+        const mouseEnterHandler = () => {
+          const stateId = svgIdToStateId[svgId];
+          console.log('Hovered:', stateId);
+          onStateHover(stateId);
+          
+          // Add hover visual effect (only if not clicked)
+          if (clickedState !== stateId) {
+            region.style.fill = '#d1451a'; // Dark orange
+            region.style.stroke = '#a34700';
+            region.style.strokeWidth = '3';
+            region.style.filter = 'drop-shadow(0 0 8px rgba(209, 69, 26, 0.6))';
+          }
+        };
+        
+        const mouseLeaveHandler = () => {
+          const stateId = svgIdToStateId[svgId];
+          onStateLeave();
+          
+          // Remove hover visual effect (only if not clicked)
+          if (clickedState !== stateId) {
+            region.style.fill = '#f79647';
+            region.style.stroke = '#a34700';
+            region.style.strokeWidth = '1';
+            region.style.filter = 'none';
+          }
+        };
+
+        const clickHandler = () => {
+          const stateId = svgIdToStateId[svgId];
+          console.log('Clicked:', stateId);
+          onStateClick(stateId);
+          
+          // Visual feedback for click - dark colors
+          region.style.fill = '#8b4513'; // Dark brown
+          region.style.stroke = '#654321';
+          region.style.strokeWidth = '4';
+          region.style.filter = 'drop-shadow(0 0 12px rgba(139, 69, 19, 0.8))';
+        };
+
+        // Store references for cleanup
+        node[`__mouseenter_${svgId}`] = mouseEnterHandler;
+        node[`__mouseleave_${svgId}`] = mouseLeaveHandler;
+        node[`__click_${svgId}`] = clickHandler;
+        
+        region.addEventListener('mouseenter', mouseEnterHandler);
+        region.addEventListener('mouseleave', mouseLeaveHandler);
+        region.addEventListener('click', clickHandler);
+      }
+    });
+
+    node.__listenersAttached = true;
+
+    // Cleanup function
+    return () => {
+      if (node.__listenersAttached) {
         Object.keys(svgIdToStateId).forEach(svgId => {
           const region = node.querySelector(`#${svgId}`);
-          if (region) {
-            region.style.cursor = 'pointer';
-            region.addEventListener('mouseenter', () => {
-              console.log('Hovered:', svgIdToStateId[svgId]);
-              onStateHover(svgIdToStateId[svgId]);
-            });
-            region.addEventListener('mouseleave', onStateLeave);
+          if (region && node[`__mouseenter_${svgId}`]) {
+            region.removeEventListener('mouseenter', node[`__mouseenter_${svgId}`]);
+            region.removeEventListener('mouseleave', node[`__mouseleave_${svgId}`]);
+            region.removeEventListener('click', node[`__click_${svgId}`]);
           }
         });
+      }
+    };
+  }, [onStateHover, onStateLeave, onStateClick, clickedState]);
+
+  // Reset all states to default appearance
+  useEffect(() => {
+    if (!mapRef.current) return;
+    
+    const node = mapRef.current;
+    Object.keys(svgIdToStateId).forEach(svgId => {
+      const region = node.querySelector(`#${svgId}`);
+      if (region) {
+        region.style.fill = '#f79647';
+        region.style.stroke = '#a34700';
+        region.style.strokeWidth = '1';
+        region.style.filter = 'none';
+      }
+    });
+  }, []);
+
+  return (
+    <SnameMap
+      ref={mapRef}
+      style={{ 
+        width: '100%', 
+        maxWidth: 530, 
+        maxHeight: 550, 
+        objectFit: 'contain', 
+        display: 'block',
+        filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.1))'
       }}
     />
   );
@@ -568,7 +601,40 @@ const InteractiveMap = ({ onStateHover, onStateLeave }) => {
 
 const StatewiseSection = () => {
   const [hoveredState, setHoveredState] = useState(null);
-  const hoveredStateData = hoveredState ? statesData.find(s => s.id === hoveredState) : null;
+  const [clickedState, setClickedState] = useState(null);
+  const [isTableLocked, setIsTableLocked] = useState(false);
+  
+  // Determine which state data to show
+  const activeState = clickedState || hoveredState;
+  const activeStateData = activeState ? statesData.find(s => s.id === activeState) : null;
+
+  const handleStateHover = (stateId) => {
+    setHoveredState(stateId);
+  };
+
+  const handleStateLeave = () => {
+    if (!isTableLocked) {
+      setHoveredState(null);
+    }
+  };
+
+  const handleStateClick = (stateId) => {
+    if (clickedState === stateId) {
+      // Unclick the same state
+      setClickedState(null);
+      setIsTableLocked(false);
+    } else {
+      // Click a different state
+      setClickedState(stateId);
+      setIsTableLocked(true);
+    }
+  };
+
+  const unlockTable = () => {
+    setClickedState(null);
+    setIsTableLocked(false);
+    setHoveredState(null);
+  };
 
   return (
     <section className="py-10 bg-gradient-to-br from-orange-50 via-white to-orange-100">
@@ -631,7 +697,21 @@ const StatewiseSection = () => {
 
           {/* Center column (SVG Map) */}
           <div className="flex flex-col flex-1 bg-transparent p-3">
-            <h2 className="text-2xl font-bold text-orange-700 mb-4 text-center w-full">Indian States & UTs Emergency Map</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold text-orange-700 text-center flex-1">
+                {activeStateData ? `${activeStateData.name} ${clickedState ? '(Locked)' : '(Hovering)'}` : 'Indian States & UTs Emergency Map'}
+              </h2>
+              {isTableLocked && (
+                <button
+                  onClick={unlockTable}
+                  className="inline-flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm font-semibold shadow transition"
+                  title="Unlock table"
+                >
+                  <Unlock className="h-4 w-4" />
+                  Unlock
+                </button>
+              )}
+            </div>
             <div className="flex-1 flex items-center justify-center">
               <div
                 style={{
@@ -646,38 +726,63 @@ const StatewiseSection = () => {
                 }}
               >
                 <InteractiveMap
-                  onStateHover={setHoveredState}
-                  onStateLeave={() => setHoveredState(null)}
+                  onStateHover={handleStateHover}
+                  onStateLeave={handleStateLeave}
+                  onStateClick={handleStateClick}
+                  hoveredState={hoveredState}
+                  clickedState={clickedState}
                 />
               </div>
+            </div>
+            <div className="text-center text-sm text-gray-600 mt-2">
+              <p>💡 <strong>Tip:</strong> Click on any state to lock the information panel. Hover over other states to compare data.</p>
             </div>
           </div>
 
           {/* Right column */}
           <div className="flex flex-col justify-between items-center px-4 py-8 bg-gradient-to-b from-white to-orange-50 border-t md:border-t-0 md:border-l border-orange-100 md:w-[320px] w-full">
-            <div className="w-full max-w-xs bg-white rounded-2xl shadow-lg p-6">
-              <h2 className="text-xl font-bold mb-4 text-orange-700 sticky top-0 bg-white z-10">
-                {hoveredStateData ? `View ${hoveredStateData.name}` : 'View State'}
-              </h2>
-              {hoveredStateData ? (
+            <div className="w-full max-w-xs bg-white rounded-2xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-orange-700 sticky top-0 bg-white z-10">
+                  {activeStateData ? `${activeStateData.name} Numbers` : 'State Information'}
+                </h2>
+                {isTableLocked && (
+                  <Lock className="h-5 w-5 text-red-500" />
+                )}
+              </div>
+              {activeStateData ? (
                 <>
+                  <div className="mb-4">
+                    <img 
+                      src={activeStateData.image} 
+                      alt={activeStateData.name}
+                      className="w-full h-32 object-cover rounded-lg mb-3"
+                    />
+                  </div>
                   <table className="w-full text-sm border border-orange-200 rounded-lg overflow-hidden bg-white shadow">
                     <tbody>
-                      {hoveredStateData.info.map((row, idx) => (
-                        <tr key={idx} className="even:bg-orange-50">
+                      {activeStateData.info.map((row, idx) => (
+                        <tr key={idx} className="even:bg-orange-50 hover:bg-orange-100 transition-colors">
                           <td className="font-semibold pr-2 py-2 text-gray-700 w-1/2 border-b border-orange-100">{row.label}</td>
-                          <td className="py-2 text-gray-900 border-b border-orange-100">{row.value}</td>
+                          <td className="py-2 text-gray-900 border-b border-orange-100 font-mono">{row.value}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
-                  <p className="text-xs text-gray-500 mt-3">All numbers are regularly updated and verified for accuracy.</p>
+                  <p className="text-xs text-gray-500 mt-3">
+                    {isTableLocked 
+                      ? "Table is locked. Click 'Unlock' or click the same state again to unlock." 
+                      : "All numbers are regularly updated and verified for accuracy."
+                    }
+                  </p>
                 </>
               ) : (
                 <>
                   <div className="flex flex-col items-center justify-center text-gray-400 mb-4">
-                    <svg className="w-12 h-12 mb-2" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2" /></svg>
-                    <span>Hover over a state to see numbers</span>
+                    <svg className="w-12 h-12 mb-2" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2" />
+                    </svg>
+                    <span className="text-center">Hover over any state to see emergency numbers and information</span>
                   </div>
                   <table className="w-full text-sm border border-orange-200 rounded-lg overflow-hidden bg-white shadow">
                     <thead>
@@ -688,14 +793,14 @@ const StatewiseSection = () => {
                     </thead>
                     <tbody>
                       {statesData.slice(0, 5).map((state, idx) => (
-                        <tr key={idx} className="even:bg-orange-50">
+                        <tr key={idx} className="even:bg-orange-50 hover:bg-orange-100 transition-colors">
                           <td className="py-2 px-2 text-gray-700">{state.name}</td>
-                          <td className="py-2 px-2 text-gray-900">{state.info[0]?.value}</td>
+                          <td className="py-2 px-2 text-gray-900 font-mono">{state.info[0]?.value}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
-                  <p className="text-xs text-gray-500 mt-3">Browse a state to see all helpline and emergency numbers.</p>
+                  <p className="text-xs text-gray-500 mt-3">Browse any state to see all helpline and emergency numbers.</p>
                 </>
               )}
             </div>

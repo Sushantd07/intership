@@ -1711,7 +1711,7 @@ const CompanyPage = () => {
                     </div>
                     <ul className="divide-y divide-gray-100">
                       {[
-                        { name: 'SBI Customer Care', href: '/category/banking/private-banks/sbi-bank/contactnumber' },
+                        { name: 'SBI Customer Care', href: '/category/banking-services/sbi-bank/contactnumber' },
                         { name: 'Axis Bank Customer Care', href: '#' },
                         { name: 'Union Bank of India Customer Care', href: '#' },
                         { name: 'ICICI Bank Customer Care', href: '#' },

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import ImageThumbnail from "../components/ImageThumbnail";
+import CompanyPageService from "../services/companyPageService";
 import {
   Phone,
   Star,
@@ -57,6 +58,9 @@ import {
   UserPlus,
 } from "lucide-react";
 import CommentSection from '../components/CommentSection';
+import ComplaintsTab from '../components/ComplaintsTab';
+import AdminToggle from '../components/admin/AdminToggle';
+import InlineEditor from '../components/admin/InlineEditor';
 const icons = [PhoneCall, AlertCircle, CreditCard, Shield];
 const sbiContacts = {
   tollFree: [
@@ -96,9 +100,23 @@ const sbiContacts = {
 };
 
 const CompanyPage = () => {
-  const { categoryId, companySlug } = useParams();
+  const { categoryId, companySlug, companyId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // Determine which routing structure is being used
+  const isObjectIdRoute = location.pathname.includes('/company/');
+  const companyIdentifier = isObjectIdRoute ? companyId : companySlug;
+  
+  // Debug logging for route determination
+  console.log('Route Debug:', {
+    pathname: location.pathname,
+    categoryId,
+    companySlug,
+    companyId,
+    isObjectIdRoute,
+    companyIdentifier
+  });
   
   // Map URL segment to tab id
   const tabUrlToId = {
@@ -136,9 +154,11 @@ const CompanyPage = () => {
   const [selectedIVRS, setSelectedIVRS] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [copiedSms, setCopiedSms] = useState(null);
+  const [isAdminMode, setIsAdminMode] = useState(false);
 
-  // Fetch contact numbers data from API
-  const fetchContactNumbersData = async (isManualRefresh = false) => {
+  // Fetch company page data from API
+  const fetchCompanyPageData = async (isManualRefresh = false) => {
     if (isManualRefresh) {
       setIsRefreshing(true);
     } else {
@@ -146,9 +166,11 @@ const CompanyPage = () => {
     }
     setError(null);
     try {
-      const response = await fetch('http://localhost:3000/api/tabs/contact-numbers');
+      // Use the new consolidated API
+      const url = `http://localhost:3000/api/subcategories/company/${companyIdentifier}`;
+      const response = await fetch(url);
       if (!response.ok) {
-        throw new Error('Failed to fetch contact numbers data');
+        throw new Error('Failed to fetch company page data');
       }
       const result = await response.json();
       if (result.success) {
@@ -158,32 +180,105 @@ const CompanyPage = () => {
         throw new Error(result.message || 'Failed to fetch data');
       }
     } catch (err) {
+      console.error('Error in fetchCompanyPageData:', err);
       setError(err.message);
-      console.error('Error fetching contact numbers:', err);
     } finally {
       setLoading(false);
       setIsRefreshing(false);
     }
   };
 
-  // Fetch data when component mounts or when switching to numbers tab
-  useEffect(() => {
-    if (activeTab === "numbers") {
-      fetchContactNumbersData();
+  // Fetch dynamic company data based on slug
+  const fetchDynamicCompanyData = async (isManualRefresh = false) => {
+    if (isManualRefresh) {
+      setIsRefreshing(true);
+    } else {
+      setLoading(true);
     }
-  }, [activeTab]);
+    setError(null);
+    
+    try {
+      // Use the CompanyPageService to fetch data by slug
+      const companyData = await CompanyPageService.getCompanyPageBySlug(companySlug);
+      setContactNumbersData(companyData);
+          setLastUpdated(new Date());
+    } catch (error) {
+      console.error('Error fetching dynamic company data:', error);
+      setError('Failed to load company data');
+    } finally {
+      setLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  // Fetch contact numbers data from API (for backward compatibility)
+  const fetchContactNumbersData = async (isManualRefresh = false) => {
+    if (isObjectIdRoute) {
+      // Use new consolidated API
+      return fetchCompanyPageData(isManualRefresh);
+    } else {
+      // Use CompanyPageService for all company data
+      if (isManualRefresh) {
+        setIsRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+      setError(null);
+      
+      try {
+        console.log('Fetching contact numbers data for companySlug:', companySlug);
+        
+        // Use the CompanyPageService to fetch data by slug
+        const companyData = await CompanyPageService.getCompanyPageBySlug(companySlug);
+        setContactNumbersData(companyData);
+            setLastUpdated(new Date());
+      } catch (err) {
+        setError(err.message);
+        console.error('Error fetching contact numbers:', err);
+      } finally {
+        setLoading(false);
+        setIsRefreshing(false);
+      }
+    }
+  };
+
+  // Fetch data when component mounts or when switching to numbers or complaints tab
+  useEffect(() => {
+    if (activeTab === "numbers" || activeTab === "complaints") {
+      if (isObjectIdRoute) {
+        fetchCompanyPageData();
+      } else if (companySlug) {
+        // For all company pages, fetch from company API first
+        fetchCompanyPageData();
+      } else {
+        fetchContactNumbersData();
+      }
+    }
+  }, [activeTab, companyIdentifier, companySlug, isObjectIdRoute]);
 
   // Real-time data fetching with polling
   useEffect(() => {
     let intervalId;
     
-    if (activeTab === "numbers") {
+    if (activeTab === "numbers" || activeTab === "complaints") {
       // Initial fetch
-      fetchContactNumbersData();
+      if (isObjectIdRoute) {
+        fetchCompanyPageData();
+      } else if (companySlug) {
+        fetchCompanyPageData();
+      } else {
+        fetchContactNumbersData();
+      }
       
       // Set up polling every 30 seconds for real-time updates
       intervalId = setInterval(() => {
-        fetchContactNumbersData(false); // Auto-refresh, not manual
+        if (isObjectIdRoute) {
+          fetchCompanyPageData(false); // Auto-refresh, not manual
+        } else if (companySlug) {
+          fetchCompanyPageData(false); // Auto-refresh, not manual
+        } else {
+          fetchContactNumbersData(false); // Auto-refresh, not manual
+        }
       }, 30000); // 30 seconds interval
     }
 
@@ -205,97 +300,49 @@ const CompanyPage = () => {
     }
   }, [categoryId, companySlug, location.pathname, navigate]);
 
-  // Company data - simplified for basic info only
-  const companyData = {
-    banking: {
-      "private-banks": {
-        "hdfc-bank": {
-          name: "HDFC Bank Customer Care – Toll-Free Numbers & Support",
-          logo: "/company-logos/bank-hdfc.png",
-          description: "India's leading private sector bank offering comprehensive banking and financial services.",
-          rating: 4.8,
-          totalReviews: 3245,
-          monthlySearches: "48K",
-          founded: "1994",
-          headquarters: "Mumbai, Maharashtra",
-          website: "https://www.hdfcbank.com",
-          parentCompany: "HDFC Limited",
-          services: [
-            "Savings & Current Accounts",
-            "Credit Cards", 
-            "Personal & Home Loans",
-            "Investment Services",
-            "Digital Banking",
-          ],
-          nationalNumbers: [
-            {
-              type: "Customer Care",
-              number: "1800-258-6161",
-              description: "General banking support and account inquiries",
-              available: "24x7",
-              languages: ["Hindi", "English", "Regional Languages"],
-              avgWaitTime: "1-2 minutes",
-            },
-            {
-              type: "Credit Card Support", 
-              number: "1800-266-4332",
-              description: "Credit card related queries and support",
-              available: "24x7",
-              languages: ["Hindi", "English"],
-              avgWaitTime: "2-3 minutes",
-            },
-          ],
-          stateWiseNumbers: {
-            Maharashtra: [
-              { city: "Mumbai", number: "022-6171-2000", type: "Head Office" },
-            ],
-          },
-          complaintSteps: [
-            {
-              step: 1,
-              title: "Call Customer Care",
-              description: "Call the dedicated customer care number for your service.",
-              icon: Phone,
-            },
-            {
-              step: 2,
-              title: "Visit Branch", 
-              description: "Visit your nearest HDFC Bank branch for assistance.",
-              icon: Building2,
-            },
-          ],
-          videoGuide: {
-            title: "HDFC Bank Customer Support Guide",
-            videoId: "dQw4w9WgXcQ",
-            thumbnail: "https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg",
-            duration: "6:20",
-            views: "1.5M",
-            description: "Complete guide to HDFC Bank customer support services.",
-          },
-        },
-      },
-    },
+  // Use only backend data - no hardcoded fallbacks
+  const displayData = contactNumbersData;
+  
+
+  
+  // Create unified data structure for rendering
+  const unifiedData = {
+    _id: displayData?._id || contactNumbersData?._id,
+    name: displayData?.name || displayData?.companyName || 'Company',
+    logo: displayData?.logo || '/company-logos/default.svg',
+    description: displayData?.description || 'Company description',
+    rating: displayData?.rating || 4.0,
+    totalReviews: displayData?.totalReviews || 1000,
+    monthlySearches: displayData?.monthlySearches || '1K',
+    founded: displayData?.founded || 'N/A',
+    headquarters: displayData?.headquarters || 'N/A',
+    parentCompany: displayData?.parentCompany || 'N/A',
+    website: displayData?.website || '#',
+    phone: displayData?.phone || displayData?.mainPhone || 'N/A',
+    nationalNumbers: displayData?.tabs?.numbers?.nationalNumbersSection?.items || [],
+    stateWiseNumbers: displayData?.tabs?.numbers?.stateWiseNumbersSection?.states || {},
+    smsServices: displayData?.tabs?.numbers?.smsServicesSection?.services || [],
+    services: displayData?.services || [],
+    videoGuide: displayData?.videoGuide || null,
+    complaintContent: contactNumbersData?.complaintContent || displayData?.complaintContent || '',
+    // Add the full contact numbers data for rendering
+    contactNumbersData: displayData?.tabs?.numbers || null
   };
+  
+  // Use the contact numbers data directly for rendering
+  const contactData = unifiedData.contactNumbersData || contactNumbersData;
 
-  // Find the company by searching all subcategories
-  let company = null;
-  if (companyData[categoryId]) {
-    for (const subcatKey of Object.keys(companyData[categoryId])) {
-      if (companyData[categoryId][subcatKey][companySlug]) {
-        company = companyData[categoryId][subcatKey][companySlug];
-        break;
-      }
-    }
-  }
-
-  // Debugging log
-  console.log({ categoryId, companySlug, company });
-
+  // Only redirect if we're not using ObjectId route and no company found in API data
   useEffect(() => {
-    if (!company) {
-      navigate("/category");
-    }
-  }, [company, navigate]);
+    // Only redirect if we're not loading and have no data after a delay
+    const redirectTimeout = setTimeout(() => {
+      if (!isObjectIdRoute && !contactNumbersData && !loading) {
+        navigate("/category");
+      }
+    }, 2000); // Wait 2 seconds for API data to load
+    
+    return () => clearTimeout(redirectTimeout);
+  }, [contactNumbersData, navigate, isObjectIdRoute, companySlug, categoryId, loading]);
 
   // Sync activeTab with URL
   React.useEffect(() => {
@@ -303,7 +350,8 @@ const CompanyPage = () => {
     setActiveTab(tabUrlToId[seg] || "numbers");
   }, [location.pathname]);
 
-  if (!company) {
+  // Show loading state if no data is available and still loading
+  if (!contactNumbersData && loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -315,7 +363,7 @@ const CompanyPage = () => {
   }
 
   const handleCall = (number) => {
-    if (window.confirm(`Call ${company.name} at ${number}?`)) {
+    if (window.confirm(`Call ${unifiedData.name} at ${number}?`)) {
       window.location.href = `tel:${number}`;
     }
   };
@@ -332,7 +380,121 @@ const CompanyPage = () => {
     setTimeout(() => setCopiedNumber(""), 2000);
   };
 
-  const states = Object.keys(company.stateWiseNumbers);
+  const handleSaveCompanyData = async (updatedData) => {
+    try {
+      // Check if we have a valid ID
+      if (!unifiedData._id) {
+        showToast('Error: Company ID not found', 'error');
+        return;
+      }
+      
+      // Optimize the data before sending
+      const optimizedData = {
+        ...updatedData,
+        // Only send essential fields to reduce payload size
+        name: updatedData.name,
+        description: updatedData.description,
+        founded: updatedData.founded,
+        headquarters: updatedData.headquarters,
+        rating: updatedData.rating,
+        website: updatedData.website,
+        phone: updatedData.phone,
+        complaintContent: updatedData.complaintContent
+      };
+      
+      // Make API call to save the data
+      const response = await fetch(`http://localhost:3000/api/subcategories/company-page/${unifiedData._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(optimizedData)
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        showToast('Company data saved successfully!', 'success');
+        
+        // Update the local state with the new data
+        if (result.data) {
+          // Force update the contact numbers data with the new data
+          setContactNumbersData(prevData => {
+            const newData = {
+              ...prevData,
+              ...result.data
+            };
+            return newData;
+          });
+        }
+        
+        // Force a complete refresh of the page data
+        await fetchCompanyPageData(true);
+        
+        // Also force a re-render by updating the last updated timestamp
+        setLastUpdated(new Date());
+      } else {
+        showToast(result.message || 'Error saving company data', 'error');
+      }
+      
+    } catch (error) {
+      console.error('Error saving company data:', error);
+      showToast(`Error saving company data: ${error.message}`, 'error');
+    }
+  };
+
+  // Handle inline editing saves
+  const handleInlineSave = async (field, value) => {
+    try {
+      if (!unifiedData._id) {
+        showToast('Error: Company ID not found', 'error');
+        return;
+      }
+
+      // Create update data with only the changed field
+      const updateData = {
+        [field]: value
+      };
+
+      // Make API call to save the specific field
+      const response = await fetch(`http://localhost:3000/api/subcategories/company-page/${unifiedData._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updateData)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success) {
+        showToast(`${field} updated successfully!`, 'success');
+        
+        // Update local state
+        setContactNumbersData(prevData => ({
+          ...prevData,
+          [field]: value
+        }));
+        
+        // Force refresh
+        await fetchCompanyPageData(true);
+        setLastUpdated(new Date());
+      } else {
+        showToast(result.message || 'Error updating field', 'error');
+      }
+
+    } catch (error) {
+      console.error('Error saving inline edit:', error);
+      showToast(`Error updating ${field}: ${error.message}`, 'error');
+    }
+  };
+
+  const states = Object.keys(unifiedData.stateWiseNumbers);
 
   // List of all 36 states and union territories
   const allStates = [
@@ -383,9 +545,9 @@ const CompanyPage = () => {
     { state: "Lakshadweep", city: "", type: "", number: "" },
     { state: "Puducherry", city: "", type: "", number: "" },
   ];
-  // Fill in data from company.stateWiseNumbers if available
+  // Fill in data from unifiedData.stateWiseNumbers if available
   const stateTableRows = allStates.map((row) => {
-    const offices = company.stateWiseNumbers[row.state];
+    const offices = unifiedData.stateWiseNumbers[row.state];
     if (offices && offices.length > 0) {
       return {
         state: row.state,
@@ -396,8 +558,6 @@ const CompanyPage = () => {
     }
     return row;
   });
-
-  const [copiedSms, setCopiedSms] = useState(null);
 
   // Toast notification component
   const Toast = ({ message, type = 'success', onClose }) => (
@@ -419,6 +579,17 @@ const CompanyPage = () => {
       <AnimatePresence>
         {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
       </AnimatePresence>
+      
+      {/* Admin Toggle */}
+      <AdminToggle 
+        companyData={unifiedData}
+        onSave={handleSaveCompanyData}
+        onInlineSave={handleInlineSave}
+        isAdminMode={isAdminMode}
+        setIsAdminMode={setIsAdminMode}
+      />
+      
+
       {/* Header Section */}
       <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 text-white">
         <div className="absolute inset-0 bg-black/20"></div>
@@ -463,18 +634,26 @@ const CompanyPage = () => {
               {categoryId === "telecom" ? "Telecommunications" : "Banking & Finance"}
             </button>
             <ChevronRight className="h-4 w-4" />
-            <span className="text-white font-semibold">{company.name}</span>
+            <InlineEditor
+              value={unifiedData.name}
+              onSave={handleInlineSave}
+              field="name"
+              isAdminMode={isAdminMode}
+              className="text-white font-semibold"
+            >
+              {unifiedData.name}
+            </InlineEditor>
           </div>
           {/* Company Header */}
           <div className="grid lg:grid-cols-3 gap-8 items-center">
             <div className="lg:col-span-2">
               <div className="flex items-center gap-4 mb-4"> {/* Less gap/margin */}
                 <div className={`w-20 h-20 rounded-xl flex items-center justify-center overflow-hidden ${
-                  company.name.includes('HDFC Bank') 
+                  unifiedData.name.includes('HDFC Bank') 
                     ? 'bg-white/95 shadow-lg border border-gray-200/50' 
                     : 'bg-white/95 shadow-lg border border-gray-200/50'
                 }`}>
-                  {company.name.includes('HDFC Bank') ? (
+                  {unifiedData.name.includes('HDFC Bank') ? (
                     <img
                       src="/company-logos/Bank/hdfc_bank.svg"
                       alt="HDFC Bank logo"
@@ -484,22 +663,22 @@ const CompanyPage = () => {
                         target.style.display = "none";
                         const fallback = target.nextElementSibling;
                         if (fallback) {
-                          fallback.textContent = company.name.charAt(0);
+                          fallback.textContent = unifiedData.name.charAt(0);
                           fallback.classList.remove("hidden");
                         }
                       }}
                     />
                   ) : (
                     <img
-                      src={company.logo}
-                      alt={`${company.name} logo`}
+                      src={unifiedData.logo}
+                      alt={`${unifiedData.name} logo`}
                       className="w-16 h-16 object-contain"
                       onError={(e) => {
                         const target = e.target;
                         target.style.display = "none";
                         const fallback = target.nextElementSibling;
                         if (fallback) {
-                          fallback.textContent = company.name.charAt(0);
+                          fallback.textContent = unifiedData.name.charAt(0);
                           fallback.classList.remove("hidden");
                         }
                       }}
@@ -508,26 +687,56 @@ const CompanyPage = () => {
                 </div>
                 <div>
                   <h1 className="text-4xl md:text-3xl font-bold mb-2">
-                    {company.name}
+                    <InlineEditor
+                      value={unifiedData.name}
+                      onSave={handleInlineSave}
+                      field="name"
+                      isAdminMode={isAdminMode}
+                      className="text-white"
+                    >
+                      {unifiedData.name}
+                    </InlineEditor>
                   </h1>
+                  {unifiedData.role && (
+                    <div className="inline-block bg-white/20 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-medium border border-white/30">
+                      {unifiedData.role}
+                    </div>
+                  )}
                 </div>
               </div>
 
               <p className="text-lg text-white/90 mb-4 leading-relaxed"> {/* Less margin below */}
-                {company.description}
+                <InlineEditor
+                  value={unifiedData.description}
+                  onSave={handleInlineSave}
+                  field="description"
+                  type="textarea"
+                  isAdminMode={isAdminMode}
+                  className="text-white/90"
+                >
+                  {unifiedData.description}
+                </InlineEditor>
               </p>
 
               {/* Quick Actions */}
               <div className="flex flex-wrap gap-3">
                 <button
-                  onClick={() => handleCall(company.nationalNumbers[0].number)}
+                  onClick={() => handleCall(unifiedData.nationalNumbers[0]?.number || unifiedData.phone)}
                   className="bg-white text-blue-600 font-semibold px-4 py-2 rounded-lg hover:bg-blue-50 transition-all duration-300 shadow-md hover:shadow-lg flex items-center gap-2 text-sm"
                 >
                   <Phone className="h-4 w-4" />
-                  Call Now: {company.nationalNumbers[0].number}
+                  Call Now: <InlineEditor
+                    value={unifiedData.nationalNumbers[0]?.number || unifiedData.phone}
+                    onSave={handleInlineSave}
+                    field="phone"
+                    isAdminMode={isAdminMode}
+                    className="text-blue-600"
+                  >
+                    {unifiedData.nationalNumbers[0]?.number || unifiedData.phone}
+                  </InlineEditor>
                 </button>
                 <a
-                  href={company.website}
+                  href={unifiedData.website}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="bg-white/10 backdrop-blur-sm text-white font-semibold px-4 py-2 rounded-lg hover:bg-white/20 transition-all duration-300 border border-white/20 flex items-center gap-2 text-sm"
@@ -539,19 +748,19 @@ const CompanyPage = () => {
               </div>
             </div>
 
-            {company.name === 'HDFC Bank' ? (
+            {unifiedData.name === 'HDFC Bank' ? (
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/20">
                 <h3 className="text-base font-semibold text-white mb-2 text-center">How to Complain of HDFC Bank</h3>
                 <a
-                  href={`https://www.youtube.com/watch?v=${company.videoGuide?.videoId || ''}`}
+                  href={`https://www.youtube.com/watch?v=${unifiedData.videoGuide?.videoId || ''}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block w-full"
                 >
                   <div className="relative rounded-xl overflow-hidden shadow-lg border border-white/20 mb-2 h-32">
                     <img
-                      src={company.videoGuide?.thumbnail}
-                      alt={company.videoGuide?.title}
+                      src={unifiedData.videoGuide?.thumbnail}
+                      alt={unifiedData.videoGuide?.title}
                       className="w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -561,9 +770,9 @@ const CompanyPage = () => {
                     </div>
                   </div>
                 </a>
-                <div className="text-white/90 text-xs text-center mb-1 font-semibold">{company.videoGuide?.title}</div>
-                <div className="text-white/80 text-[11px] text-center mb-1">{company.videoGuide?.description}</div>
-                <div className="text-white/60 text-[11px] text-center">Duration: {company.videoGuide?.duration} &bull; {company.videoGuide?.views} views</div>
+                <div className="text-white/90 text-xs text-center mb-1 font-semibold">{unifiedData.videoGuide?.title}</div>
+                <div className="text-white/80 text-[11px] text-center mb-1">{unifiedData.videoGuide?.description}</div>
+                <div className="text-white/60 text-[11px] text-center">Duration: {unifiedData.videoGuide?.duration} &bull; {unifiedData.videoGuide?.views} views</div>
               </div>
             ) : (
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
@@ -573,27 +782,52 @@ const CompanyPage = () => {
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between items-center">
                     <span className="text-white/80">Founded</span>
-                    <span className="font-bold text-white">
-                      {company.founded}
-                    </span>
+                    <InlineEditor
+                      value={unifiedData.founded}
+                      onSave={handleInlineSave}
+                      field="founded"
+                      isAdminMode={isAdminMode}
+                      className="font-bold text-white"
+                    >
+                      {unifiedData.founded}
+                    </InlineEditor>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-white/80">Headquarters</span>
-                    <span className="font-bold text-white">
-                      {company.headquarters}
-                    </span>
+                    <InlineEditor
+                      value={unifiedData.headquarters}
+                      onSave={handleInlineSave}
+                      field="headquarters"
+                      isAdminMode={isAdminMode}
+                      className="font-bold text-white"
+                    >
+                      {unifiedData.headquarters}
+                    </InlineEditor>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-white/80">Parent Company</span>
                     <span className="font-bold text-white">
-                      {company.parentCompany}
+                      {unifiedData.parentCompany}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-white/80">Role/Department</span>
+                    <span className="font-bold text-white">
+                      {unifiedData.role || 'Support'}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-white/80">Rating</span>
-                    <span className="font-bold text-white">
-                      {company.rating}/5
-                    </span>
+                    <InlineEditor
+                      value={unifiedData.rating}
+                      onSave={handleInlineSave}
+                      field="rating"
+                      type="number"
+                      isAdminMode={isAdminMode}
+                      className="font-bold text-white"
+                    >
+                      {unifiedData.rating}/5
+                    </InlineEditor>
                   </div>
                 </div>
               </div>
@@ -731,30 +965,60 @@ const CompanyPage = () => {
                 )}
 
                 {/* Top Contact Cards */}
-                {contactNumbersData?.topContactCards && (
+                {contactData?.topContactCards && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {contactNumbersData.topContactCards.cards.map((item, index) => {
+                    {contactData.topContactCards.cards.map((item, index) => {
                       const Icon = icons[index] || PhoneCall;
+                      
+                      // Permanent color schemes for 4 cards (like HDFC)
+                      const colorSchemes = [
+                        {
+                          cardBg: "#D0E7FF",
+                          iconBg: "#A8D8FF", 
+                          textColor: "#16a34a"
+                        },
+                        {
+                          cardBg: "#FFEAEA",
+                          iconBg: "#FFCCCC",
+                          textColor: "#e11d48"
+                        },
+                        {
+                          cardBg: "#F5E9FF",
+                          iconBg: "#E6D7FF",
+                          textColor: "#9333ea"
+                        },
+                        {
+                          cardBg: "#FFF9E5",
+                          iconBg: "#FFF2B8",
+                          textColor: "#ca8a04"
+                        }
+                      ];
+                      
+                      const colors = colorSchemes[index] || colorSchemes[0];
+                      
                       return (
                         <div
                           key={index}
                           className="p-4 rounded-xl shadow hover:shadow-md transition"
-                          style={{ backgroundColor: item.colors?.cardBg || '#f8fafc' }}
+                          style={{ backgroundColor: colors.cardBg }}
                         >
                           <div
                             className="w-12 h-12 rounded-md flex items-center justify-center mb-3"
-                            style={{ backgroundColor: item.colors?.iconBg || '#e2e8f0' }}
+                            style={{ backgroundColor: colors.iconBg }}
                           >
                             <Icon 
                               className="w-6 h-6" 
-                              style={{ color: item.colors?.textColor || '#3b82f6' }}
+                              style={{ color: colors.textColor }}
                             />
                           </div>
                           <h4 className="text-sm font-semibold text-gray-800">
                             {item.title}
                           </h4>
                           <div className="flex items-center gap-2 mt-1">
-                            <p className="text-lg font-extrabold text-blue-600">
+                            <p 
+                              className="text-lg font-extrabold"
+                              style={{ color: colors.textColor }}
+                            >
                               {item.number}
                             </p>
                             <button
@@ -775,11 +1039,11 @@ const CompanyPage = () => {
                 {/* Bottom Section */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Helpline Numbers */}
-                  {contactNumbersData?.helplineNumbersSection && (
+                  {contactData?.helplineNumbersSection && (
                     <div className="bg-white rounded-xl shadow p-4">
                       <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2 mb-4">
                         <Phone className="w-5 h-5 text-blue-600" /> 
-                        {contactNumbersData.helplineNumbersSection.heading?.text || "Helpline Numbers"}
+                        {contactData?.helplineNumbersSection?.heading?.text || "Helpline Numbers"}
                       </h3>
                       <table className="w-full text-sm">
                         <thead>
@@ -789,7 +1053,7 @@ const CompanyPage = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {contactNumbersData.helplineNumbersSection.table?.rows?.map((row, idx) => (
+                          {contactData?.helplineNumbersSection?.table?.rows?.map((row, idx) => (
                             <tr
                               key={idx}
                               className={idx % 2 === 0 ? "bg-gray-50" : ""}
@@ -827,16 +1091,16 @@ const CompanyPage = () => {
                   )}
 
                   {/* All India Numbers */}
-                  {contactNumbersData?.allIndiaNumbersSection && (
+                  {contactData?.allIndiaNumbersSection && (
                     <div className="bg-white rounded-xl shadow p-4 h-fit">
                       <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2 mb-4">
                         <Phone className="w-5 h-5 text-green-600" /> 
-                        {contactNumbersData.allIndiaNumbersSection.heading?.text || "All India Numbers"}
+                        {contactData?.allIndiaNumbersSection?.heading?.text || "All India Numbers"}
                       </h3>
                       <table className="w-full text-[15px]">
                         <thead>
                           <tr className="bg-gray-100 text-gray-700 text-left font-semibold">
-                            {contactNumbersData.allIndiaNumbersSection.table?.headers?.map((header, idx) => (
+                            {contactData?.allIndiaNumbersSection?.table?.headers?.map((header, idx) => (
                               <th key={idx} className="py-2 px-3">{header}</th>
                             )) || (
                               <>
@@ -847,7 +1111,7 @@ const CompanyPage = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {contactNumbersData.allIndiaNumbersSection.table?.rows?.map((row, idx) => (
+                          {contactData?.allIndiaNumbersSection?.table?.rows?.map((row, idx) => (
                             <tr
                               key={idx}
                               className={idx % 2 === 0 ? "bg-gray-50" : ""}
@@ -882,12 +1146,12 @@ const CompanyPage = () => {
 
               
                 {/* SMS & WhatsApp Services */}
-                {contactNumbersData?.smsServicesSection && (
+                {contactData?.smsServicesSection && (
                   <div className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
                         <MessageSquare className="h-6 w-6 text-blue-600" />
-                        {contactNumbersData.smsServicesSection.heading?.text || "SMS & WhatsApp Services"}
+                        {contactData?.smsServicesSection?.heading?.text || "SMS & WhatsApp Services"}
                       </h3>
                       <button
                         onClick={() => setSmsDropdownOpen(!smsDropdownOpen)}
@@ -906,7 +1170,7 @@ const CompanyPage = () => {
                           className="overflow-hidden"
                         >
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-                            {contactNumbersData.smsServicesSection.services?.map((service, index) => {
+                            {contactData?.smsServicesSection?.services?.map((service, index) => {
                               const colors = [
                                 { bg: 'bg-blue-50', border: 'border-blue-500', text: 'text-blue-700', borderText: 'text-blue-900' },
                                 { bg: 'bg-green-50', border: 'border-green-500', text: 'text-green-700', borderText: 'text-green-900' },
@@ -955,12 +1219,12 @@ const CompanyPage = () => {
                 )}
 
                 {/* IVRS Menu */}
-                {contactNumbersData?.ivrMenuSection && (
+                {contactData?.ivrMenuSection && (
                   <div className="mb-8">
                     <div className="bg-gray-50 rounded-2xl shadow border border-gray-100 p-6 max-w-5xl mx-auto">
                       <div className="mb-4 text-center flex justify-center items-center gap-0">
                         <span className="font-bold text-lg text-blue-900 mr-3">IVRS Menu:</span>
-                        {contactNumbersData.ivrMenuSection.menus?.map((menu, idx) => {
+                        {contactData?.ivrMenuSection?.menus?.map((menu, idx) => {
                           const isActive = selectedIVRS === idx;
                           return (
                             <React.Fragment key={idx}>
@@ -986,7 +1250,7 @@ const CompanyPage = () => {
                       </div>
                       <div className="text-gray-700 text-sm mb-4 text-center font-normal">
                         <span className="font-medium">
-                          {contactNumbersData.ivrMenuSection.description}
+                          {contactData?.ivrMenuSection?.description}
                         </span>
                       </div>
                       <AnimatePresence mode="wait">
@@ -998,7 +1262,7 @@ const CompanyPage = () => {
                           transition={{ duration: 0.4 }}
                         >
                           <ul className="space-y-4">
-                            {contactNumbersData.ivrMenuSection.menus?.[selectedIVRS]?.options?.map((item, index) => (
+                            {contactData?.ivrMenuSection?.menus?.[selectedIVRS]?.options?.map((item, index) => (
                               <li key={index}>
                                 <div className="font-medium text-blue-800">
                                   Press {item.option}: {item.description}
@@ -1068,15 +1332,15 @@ const CompanyPage = () => {
                 </div> */}
 
                 {/* Email Support (full width, below) */}
-                {contactNumbersData?.emailSupportSection && (
+                {contactData?.emailSupportSection && (
                   <div className="bg-white rounded-xl shadow p-4">
                     <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2 mb-4">
-                      <Mail className="w-5 h-5 text-blue-600" /> {contactNumbersData.emailSupportSection.heading?.text || "Email Support"}
+                      <Mail className="w-5 h-5 text-blue-600" /> {contactData.emailSupportSection.heading?.text || "Email Support"}
                     </h3>
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="bg-gray-100 text-gray-700 text-left font-semibold">
-                          {contactNumbersData.emailSupportSection.table?.headers?.map((header, idx) => (
+                          {contactData.emailSupportSection.table?.headers?.map((header, idx) => (
                             <th key={idx} className="py-2 px-3">{header}</th>
                           )) || (
                             <>
@@ -1087,7 +1351,7 @@ const CompanyPage = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {contactNumbersData.emailSupportSection.table?.rows?.map((row, idx) => (
+                        {contactData.emailSupportSection.table?.rows?.map((row, idx) => (
                           <tr
                             key={idx}
                             className={idx % 2 === 0 ? "bg-gray-50" : ""}
@@ -1115,15 +1379,15 @@ const CompanyPage = () => {
                 )}
 
                 {/* NRI Phone Banking Support and Missed Call Service */}
-                {contactNumbersData?.nriPhoneBankingSection && contactNumbersData?.missedCallServiceSection && (
+                {contactData?.nriPhoneBankingSection && contactData?.missedCallServiceSection && (
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* NRI Phone Banking Support */}
                     <div className="bg-white rounded-xl shadow p-6">
                       <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                        <Phone className="w-5 h-5 text-blue-600" /> {contactNumbersData.nriPhoneBankingSection.heading?.text || "NRI Phone Banking Support"}
+                        <Phone className="w-5 h-5 text-blue-600" /> {contactData.nriPhoneBankingSection.heading?.text || "NRI Phone Banking Support"}
                       </h3>
                       
-                      {contactNumbersData.nriPhoneBankingSection.subsections?.map((subsection, subIdx) => (
+                      {contactData.nriPhoneBankingSection.subsections?.map((subsection, subIdx) => (
                         <div key={subIdx} className={subIdx > 0 ? "" : "mb-8"}>
                           <h4 className="text-base font-medium text-gray-600 mb-3 flex items-center gap-2">
                             {subIdx === 0 ? <Clock className="w-4 h-4 text-green-500" /> : <UserPlus className="w-4 h-4 text-blue-500" />}
@@ -1173,19 +1437,19 @@ const CompanyPage = () => {
                     {/* Missed Call Service */}
                     <div className="bg-white rounded-xl h-fit shadow p-6">
                       <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                        <Phone className="w-5 h-5 text-blue-600" /> {contactNumbersData.missedCallServiceSection.heading?.text || "Missed Call Service"}
+                        <Phone className="w-5 h-5 text-blue-600" /> {contactData.missedCallServiceSection.heading?.text || "Missed Call Service"}
                       </h3>
                       <div className="overflow-x-auto">
                         <table className="w-full text-[15px] text-left">
                           <thead className="bg-gray-100 text-gray-700 font-semibold">
                             <tr>
-                              {contactNumbersData.missedCallServiceSection.table?.headers?.map((header, idx) => (
+                              {contactData.missedCallServiceSection.table?.headers?.map((header, idx) => (
                                 <th key={idx} className="py-2 px-3">{header}</th>
                               ))}
                             </tr>
                           </thead>
                           <tbody>
-                            {contactNumbersData.missedCallServiceSection.table?.rows?.map((row, idx) => (
+                            {contactData.missedCallServiceSection.table?.rows?.map((row, idx) => (
                               <tr
                                 key={idx}
                                 className={idx % 2 === 0 ? "bg-gray-50" : ""}
@@ -1221,20 +1485,20 @@ const CompanyPage = () => {
 
                 {/* Comment Section */}
                 <CommentSection 
-                  pageId={`${categoryId}-${companySlug}`}
+                  pageId={`banking-${companySlug}`}
                   pageType="company"
                 />
               </div>
               {/* Sidebar: Customer Care List */}
-              {contactNumbersData?.customerCareListSection && (
+              {contactData?.customerCareListSection && (
                 <aside className="hidden lg:block">
                   <div className="sticky top-24">
                     <div className="bg-white rounded-2xl shadow-lg border border-gray-200 max-w-[260px] w-full">
                       <div className="bg-blue-700 rounded-t-2xl px-4 py-3">
-                        <h3 className="text-white text-lg font-bold text-center">{contactNumbersData.customerCareListSection.heading?.text || "Customer Care List"}</h3>
+                        <h3 className="text-white text-lg font-bold text-center">{contactData.customerCareListSection.heading?.text || "Customer Care List"}</h3>
                       </div>
                       <ul className="divide-y divide-gray-100">
-                        {contactNumbersData.customerCareListSection.links?.map(link => (
+                        {contactData.customerCareListSection.links?.map(link => (
                           <li key={link.name}>
                             <a
                               href={link.href}
@@ -1253,216 +1517,16 @@ const CompanyPage = () => {
           </div>
         )}
 
-        {/* Complaints Tab - Modern, Professional Visuals */}
+        {/* Complaints Tab - Dynamic Data from API */}
         {activeTab === "complaints" && (
-          <div className="w-full bg-[#F4F8FF] px-2 md:px-4">
-            <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-[3fr_1fr] gap-2 lg:gap-4">
-              {/* Main Content (Left, 60%) */}
-              <div className="flex flex-col gap-3 p-0 md:p-1">
-                {/* Unified Complaint Escalation Card */}
-                <div className="bg-white border border-blue-200 rounded-2xl shadow-lg p-4 md:p-6 flex flex-col gap-4">
-                  {/* Header + Standout Mandatory Steps */}
-                  <div>
-                    <h2 className="text-xl md:text-2xl font-extrabold text-blue-800 mb-1">HDFC Bank Step-by-Step Complaint/Grievance Filing Guide</h2>
-                    <p className="text-xs md:text-sm text-gray-700 mb-2">If you've submitted a complaint to HDFC Bank—online or offline—and haven't received a resolution after 30 days, follow these steps to escalate your complaint and get it resolved faster.</p>
-                    {/* Mandatory Prerequisite Section */}
-                    <div className="bg-blue-50 border border-blue-400 rounded-xl shadow-sm p-3 md:p-4 mb-3 flex flex-col gap-2">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Info className="w-5 h-5 text-blue-600" />
-                        <h3 className="font-bold text-blue-700 text-base md:text-lg">Mandatory Prerequisite: SCORES Registration</h3>
-                      </div>
-                      <div className="text-xs md:text-sm text-gray-800 mb-1">
-                        <span className="font-semibold">Before escalating, you must register your complaint on the <a href='https://scores.gov.in' className='text-blue-700 underline' target='_blank' rel='noopener noreferrer'>SCORES portal</a> (SEBI Complaints Redress System).</span> This is required for regulatory tracking and faster resolution.
-                      </div>
-                      <div className="text-sm md:text-sm text-gray-800 font-semibold mb-1">Details required for SCORES registration:</div>
-                      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 list-none pl-0">
-                        <li className="flex items-center gap-2 text-xs"><span className="text-green-600">✔️</span> <span className="text-[14px]">Name (as per bank records)</span></li>
-                        <li className="flex items-center gap-2 text-xs"><span className="text-green-600">✔️</span> <span className="text-[14px]">PAN (Permanent Account Number)</span></li>
-                        <li className="flex items-center gap-2 text-xs"><span className="text-green-600">✔️</span> <span className="text-[14px]">Address (current)</span></li>
-                        <li className="flex items-center gap-2 text-xs"><span className="text-green-600">✔️</span> <span className="text-[14px]">Mobile Number (active)</span></li>
-                        <li className="flex items-center gap-2 text-xs"><span className="text-green-600">✔️</span> <span className="text-[14px]">Email ID (registered)</span></li>
-                      </ul>
-                    </div>
-                    <p className="text-blue-600 text-xs md:text-sm flex items-center gap-1 mb-1"><span>📹</span> If you're looking to file a fresh complaint, you can also watch the step-by-step video guide below.</p>
-                  </div>
-                  {/* Divider */}
-                  <div className="border-t border-blue-100 my-2"></div>
-                  {/* Level 1 */}
-                  <div>
-                    <h4 className="font-bold text-blue-700 text-base md:text-lg mb-1 flex items-center gap-1">Level 1: HDFC Bank Customer Care</h4>
-                    <div className="text-xs md:text-sm text-gray-800">To register your complaint, reach out to HDFC Bank's Customer Care team through call, email, or online form. They are available 24x7 to help you with any  customer complaint:</div>
-                    <div className="flex flex-col gap-0.5 mt-1">
-                      <div className="flex items-center gap-2 text-xs md:text-sm"><span className="font-semibold">📞 Phone:</span> <span className="font-mono">1800 1600</span> / <span className="font-mono">1800 2600</span></div>
-                      <div className="flex items-center gap-2 text-xs md:text-sm"><span className="font-semibold">✉️ Email:</span> <a href="mailto:support@hdfcbank.com" className="text-blue-700 underline">support@hdfcbank.com</a></div>
-                    </div>
-                    <div className="text-xs md:text-sm text-gray-700 font-semibold mt-1">Alternative Options:</div>
-                    <ul className="list-disc list-inside ml-3 text-xs md:text-sm text-gray-700 space-y-0.5">
-                      <li>Connect with Eva/Chat Bot for quick solutions</li>
-                      <li>Visit/Contact your nearest branch</li>
-                    </ul>
-                  </div>
-                  {/* Divider */}
-                  <div className="border-t border-blue-100 my-2"></div>
-                  {/* Level 2 */}
-                  <div>
-                    <h4 className="font-bold text-blue-700 text-base md:text-lg mb-1 flex items-center gap-1">Level 2: Grievance Redressal Officer</h4>
-                    <div className="text-xs md:text-sm text-gray-800 mb-1">Still not satisfied after Level 2? You can escalate your complaint to HDFC Bank's Principal Nodal Officer for faster resolution. This is the highest level of grievance redressal within the bank.</div>
-                    <div className="overflow-x-auto mb-1">
-                      <table className="min-w-full w-full text-xs md:text-sm border border-blue-100 rounded">
-                        <thead className="bg-blue-50">
-                          <tr>
-                            <th className="py-1 px-2 border text-xs md:text-sm">Product</th>
-                            <th className="py-1 px-2 border text-xs md:text-sm">Contact Number</th>
-                            <th className="py-1 px-2 border text-xs md:text-sm">Hours</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr className="bg-white">
-                            <td className="border px-2 py-1">Banking/Digital Lending</td>
-                            <td className="border px-2 py-1 font-mono">1800 266 4060</td>
-                            <td className="border px-2 py-1">Mon-Sat, 9:30am-5:30pm<br/>2nd & 4th Sat, Sun, Holidays: Closed</td>
-                          </tr>
-                          <tr className="bg-blue-50">
-                            <td className="border px-2 py-1">Credit Cards</td>
-                            <td className="border px-2 py-1 font-mono">044-61084900</td>
-                            <td className="border px-2 py-1">Mon-Sat, 9:30am-5:30pm<br/>2nd & 4th Sat, Sun, Holidays: Closed</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                    <div className="mb-1">
-                      <span className="font-semibold text-xs md:text-sm">Email:</span>
-                      <ul className="list-disc list-inside ml-3 text-xs md:text-sm text-gray-700 space-y-0.5">
-                        <li>Digital: <a href="mailto:grievance.redressaldl@hdfcbank.com" className="text-blue-700 underline">grievance.redressaldl@hdfcbank.com</a></li>
-                        <li>Non-Credit Card: <a href="mailto:grievance.redressal@hdfcbank.com" className="text-blue-700 underline">grievance.redressal@hdfcbank.com</a></li>
-                        <li>Credit Card: <a href="mailto:grievance.redressalcc@hdfcbank.com" className="text-blue-700 underline">grievance.redressalcc@hdfcbank.com</a></li>
-                      </ul>
-                    </div>
-                    <div className="mb-1 text-xs md:text-sm">Fill out the <a href="#" className="text-blue-700 underline">Complaints/Query/Request Form</a></div>
-                    <div className="mb-1 text-gray-600 text-xs md:text-sm">Resolution Time: 10 days</div>
-                  </div>
-                  {/* Divider */}
-                  <div className="border-t border-blue-100 my-2"></div>
-                  {/* Level 3 */}
-                  <div>
-                    <h4 className="font-bold text-blue-700 text-base md:text-lg mb-1 flex items-center gap-1">Level 3: Principal Nodal Officer</h4>
-                    <div className="text-xs md:text-sm text-gray-800 mb-1">If Level 2 doesn't resolve your concern, contact the Principal Nodal Officer:</div>
-                    <div className="flex flex-col gap-0.5 mb-1">
-                      <div className="flex items-center gap-2 text-xs md:text-sm"><span className="font-semibold">✉️ Email:</span> <a href="mailto:pnohdfcbank@hdfcbank.com" className="text-blue-700 underline">pnohdfcbank@hdfcbank.com</a></div>
-                      <div className="flex items-center gap-2 text-xs md:text-sm"><span className="font-semibold">🕒 Hours:</span> Mon-Sat, 9:30am-5:30pm (Excl. 2nd & 4th Sat, Holidays)</div>
-                    </div>
-                    <div className="mb-1 font-semibold text-xs md:text-sm">Regional Nodal Officers (sample):</div>
-                    <div className="overflow-x-auto mb-1">
-                      <table className="min-w-full w-full text-xs md:text-sm border border-blue-100 rounded">
-                        <thead className="bg-blue-50">
-                          <tr>
-                            <th className="py-1 px-2 border text-xs md:text-sm">Region</th>
-                            <th className="py-1 px-2 border text-xs md:text-sm">Contact</th>
-                            <th className="py-1 px-2 border text-xs md:text-sm">Email</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr className="bg-white"><td className="border px-2 py-1">AP & Telangana</td><td className="border px-2 py-1 font-mono">040-67921327</td><td className="border px-2 py-1 font-mono">044-69039236</td></tr>
-                          <tr className="bg-blue-50"><td className="border px-2 py-1">Bihar</td><td className="border px-2 py-1 font-mono">9973665832</td><td className="border px-2 py-1 font-mono">7267850740</td></tr>
-                          <tr className="bg-white"><td className="border px-2 py-1">Delhi</td><td className="border px-2 py-1 font-mono">9211583131</td><td className="border px-2 py-1 font-mono">9354914683</td></tr>
-                          <tr className="bg-blue-50"><td className="border px-2 py-1">Mumbai</td><td className="border px-2 py-1 font-mono">022-24811081</td><td className="border px-2 py-1 font-mono">022-62841505</td></tr>
-                          <tr className="bg-white"><td className="border px-2 py-1">West Bengal</td><td className="border px-2 py-1 font-mono">033-44065165</td><td className="border px-2 py-1 font-mono">033-44065165</td></tr>
-                        </tbody>
-                      </table>
-                    </div>
-                    {/* Full Regional Email IDs Table */}
-                    <div className="mt-4">
-                      <h4 className="font-bold text-blue-700 text-xs md:text-sm mb-1">Regional Email IDs for Nodal Officers</h4>
-                      <div className="overflow-x-auto">
-                        <table className="min-w-full text-xs md:text-sm border border-blue-200 rounded bg-white">
-                          <thead className="bg-blue-100">
-                            <tr>
-                              <th className="py-2 px-3 border text-left">Region</th>
-                              <th className="py-2 px-3 border text-left">State(s)</th>
-                              <th className="py-2 px-3 border text-left">Email ID</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            <tr><td className="border px-3 py-1">Ahmedabad</td><td className="border px-3 py-1">Gujarat</td><td className="border px-3 py-1"><a href="mailto:bohdfcahm@hdfcbank.com" className="text-blue-700 underline">bohdfcahm@hdfcbank.com</a></td></tr>
-                            <tr><td className="border px-3 py-1">Guwahati</td><td className="border px-3 py-1">Assam/Manipur/Meghalaya/Tripura/Sikkim/Mizoram/Arunachal Pradesh/Nagaland</td><td className="border px-3 py-1"><a href="mailto:bohdfcasm@hdfcbank.com" className="text-blue-700 underline">bohdfcasm@hdfcbank.com</a></td></tr>
-                            <tr><td className="border px-3 py-1">Bengaluru</td><td className="border px-3 py-1">Karnataka</td><td className="border px-3 py-1"><a href="mailto:bohdfcblr@hdfcbank.com" className="text-blue-700 underline">bohdfcblr@hdfcbank.com</a></td></tr>
-                            <tr><td className="border px-3 py-1">Bhubaneswar</td><td className="border px-3 py-1">Odisha</td><td className="border px-3 py-1"><a href="mailto:bohdfcbr@hdfcbank.com" className="text-blue-700 underline">bohdfcbr@hdfcbank.com</a></td></tr>
-                            <tr><td className="border px-3 py-1">Bhopal</td><td className="border px-3 py-1">Madhya Pradesh</td><td className="border px-3 py-1"><a href="mailto:bohdfcbpl@hdfcbank.com" className="text-blue-700 underline">bohdfcbpl@hdfcbank.com</a></td></tr>
-                            <tr><td className="border px-3 py-1">Chandigarh/Shimla</td><td className="border px-3 py-1">Himachal Pradesh/Punjab/Chandigarh</td><td className="border px-3 py-1"><a href="mailto:bohdfccgh@hdfcbank.com" className="text-blue-700 underline">bohdfccgh@hdfcbank.com</a></td></tr>
-                            <tr><td className="border px-3 py-1">Chennai I & II</td><td className="border px-3 py-1">Tamil Nadu</td><td className="border px-3 py-1"><a href="mailto:bohdfccfn@hdfcbank.com" className="text-blue-700 underline">bohdfccfn@hdfcbank.com</a></td></tr>
-                            <tr><td className="border px-3 py-1">Dehradun</td><td className="border px-3 py-1">Uttarakhand</td><td className="border px-3 py-1"><a href="mailto:bohdfccddn@hdfcbank.com" className="text-blue-700 underline">bohdfccddn@hdfcbank.com</a></td></tr>
-                            <tr><td className="border px-3 py-1">Delhi I & II</td><td className="border px-3 py-1">Delhi & Haryana</td><td className="border px-3 py-1"><a href="mailto:bohdfcdel@hdfcbank.com" className="text-blue-700 underline">bohdfcdel@hdfcbank.com</a></td></tr>
-                            <tr><td className="border px-3 py-1">Hyderabad</td><td className="border px-3 py-1">Andhra Pradesh/Telangana</td><td className="border px-3 py-1"><a href="mailto:bohdfchyd@hdfcbank.com" className="text-blue-700 underline">bohdfchyd@hdfcbank.com</a></td></tr>
-                            <tr><td className="border px-3 py-1">Jammu</td><td className="border px-3 py-1">Jammu/Kashmir</td><td className="border px-3 py-1"><a href="mailto:bohdfcjammu@hdfcbank.com" className="text-blue-700 underline">bohdfcjammu@hdfcbank.com</a></td></tr>
-                            <tr><td className="border px-3 py-1">Jaipur</td><td className="border px-3 py-1">Rajasthan</td><td className="border px-3 py-1"><a href="mailto:bohdfcjr@hdfcbank.com" className="text-blue-700 underline">bohdfcjr@hdfcbank.com</a></td></tr>
-                            <tr><td className="border px-3 py-1">Kolkata I & II</td><td className="border px-3 py-1">West Bengal</td><td className="border px-3 py-1"><a href="mailto:bohdfckol@hdfcbank.com" className="text-blue-700 underline">bohdfckol@hdfcbank.com</a></td></tr>
-                            <tr><td className="border px-3 py-1">Kanpur</td><td className="border px-3 py-1">Uttar Pradesh</td><td className="border px-3 py-1"><a href="mailto:bohdfckpr@hdfcbank.com" className="text-blue-700 underline">bohdfckpr@hdfcbank.com</a></td></tr>
-                            <tr><td className="border px-3 py-1">Mumbai I & II</td><td className="border px-3 py-1">Maharashtra/Goa</td><td className="border px-3 py-1"><a href="mailto:bohdfcmum@hdfcbank.com" className="text-blue-700 underline">bohdfcmum@hdfcbank.com</a></td></tr>
-                            <tr><td className="border px-3 py-1">Patna</td><td className="border px-3 py-1">Bihar</td><td className="border px-3 py-1"><a href="mailto:bohdfcptn@hdfcbank.com" className="text-blue-700 underline">bohdfcptn@hdfcbank.com</a></td></tr>
-                            <tr><td className="border px-3 py-1">Raipur</td><td className="border px-3 py-1">Chhattisgarh</td><td className="border px-3 py-1"><a href="mailto:bohdfcraip@hdfcbank.com" className="text-blue-700 underline">bohdfcraip@hdfcbank.com</a></td></tr>
-                            <tr><td className="border px-3 py-1">Ranchi</td><td className="border px-3 py-1">Jharkhand</td><td className="border px-3 py-1"><a href="mailto:bohdfcrnc@hdfcbank.com" className="text-blue-700 underline">bohdfcrnc@hdfcbank.com</a></td></tr>
-                            <tr><td className="border px-3 py-1">Thiruvananthapuram</td><td className="border px-3 py-1">Kerala/Lakshadweep</td><td className="border px-3 py-1"><a href="mailto:bohdfctrv@hdfcbank.com" className="text-blue-700 underline">bohdfctrv@hdfcbank.com</a></td></tr>
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                    <div className="text-gray-600 text-xs md:text-sm mt-2">Resolution Time: 10 days</div>
-                  </div>
-                  {/* Divider */}
-                  <div className="border-t border-blue-100 my-2"></div>
-                  {/* Level 4 */}
-                  <div>
-                    <h4 className="font-bold text-blue-700 text-base md:text-lg mb-1 flex items-center gap-1">Level 4: Banking Ombudsman</h4>
-                    <ul className="list-disc list-inside ml-3 text-xs md:text-sm text-gray-700 mb-1">
-                      <li>If your issue remains unresolved after Level 1-3, or no reply within 30 days, contact the Banking Ombudsman (RBI).</li>
-                      <li>Use the <a href="https://cms.rbi.org.in" className="text-blue-700 underline">RBI Banking Ombudsman</a> or Centralized Public Grievance Redress And Monitoring System.</li>
-                    </ul>
-                    <div className="text-xs md:text-sm text-gray-500">Note: Keep proof of all complaints filed for your records.</div>
-                  </div>
-                </div>
-              </div>
-              {/* Sidebar (Right, 40%) - Video and Complaint Tips, hidden on mobile */}
-              <aside className="hidden lg:block">
-                <div className="sticky top-24 flex flex-col gap-3">
-                  {/* Video Card */}
-                  <div className="bg-white rounded-xl shadow-md border border-gray-200 max-w-[320px] w-full overflow-hidden">
-                    <div className="bg-blue-700 rounded-t px-3 py-2">
-                      <h3 className="text-white text-base font-bold text-center">How to File a Complaint (Video)</h3>
-                    </div>
-                    <div className="p-2 flex flex-col items-center">
-                      <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank" rel="noopener noreferrer" className="block w-full">
-                        <div className="relative rounded-xl overflow-hidden shadow-lg border border-white/20 mb-2 h-32 w-full bg-black flex items-center justify-center">
-                          <img src="https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg" alt="How to File a Complaint" className="w-full h-full object-cover opacity-80" />
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="bg-white/80 rounded-full p-2 shadow-lg">
-                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 text-blue-700">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.25v13.5l13.5-6.75-13.5-6.75z" />
-                              </svg>
-                            </div>
-                          </div>
-                        </div>
-                      </a>
-                      <div className="text-center text-gray-700 text-xs md:text-sm font-semibold">Watch this short video to learn how to file a complaint with HDFC Bank step by step.</div>
-                    </div>
-                  </div>
-                  {/* Complaint Tips Card */}
-                  <div className="bg-white rounded-xl shadow-md border border-gray-200 max-w-[320px] w-full overflow-hidden">
-                    <div className="bg-orange-700 rounded-t px-3 py-2">
-                      <h3 className="text-white text-base font-bold text-center">Complaint Tips</h3>
-                    </div>
-                    <ul className="divide-y divide-gray-100">
-                      <li className="px-3 py-2 text-gray-700 text-xs md:text-sm">✔️ Keep all complaint reference numbers safe</li>
-                      <li className="px-3 py-2 text-gray-700 text-xs md:text-sm">✔️ Always use your registered email/phone</li>
-                      <li className="px-3 py-2 text-gray-700 text-xs md:text-sm">✔️ Attach supporting documents/screenshots</li>
-                      <li className="px-3 py-2 text-gray-700 text-xs md:text-sm">✔️ Escalate only if not resolved in time</li>
-                      <li className="px-3 py-2 text-gray-700 text-xs md:text-sm">✔️ For urgent issues, call customer care directly</li>
-                    </ul>
-                  </div>
-                </div>
-              </aside>
-            </div>
-          </div>
+          <ComplaintsTab 
+            complaintsData={contactNumbersData?.tabs?.complaints || null}
+            loading={loading}
+            error={error}
+            complaintContent={unifiedData.complaintContent || contactNumbersData?.complaintContent || ''}
+          />
         )}
+
 
         {/* Quick Help Tab */}
         {activeTab === "quickhelp" && (
@@ -1673,7 +1737,7 @@ const CompanyPage = () => {
                   </div>
                   <div className="absolute bottom-6 left-6 right-6">
                     <h3 className="text-white text-xl font-semibold mb-2">
-                      How to Contact {company.name} Customer Support
+                      How to Contact {unifiedData.name} Customer Support
                     </h3>
                     <div className="flex items-center gap-4 text-white/80 text-sm">
                       <span>Duration: 5:32</span>
@@ -1743,10 +1807,10 @@ const CompanyPage = () => {
             {/* Company Stats */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
               {[
-                { label: "Founded", value: company.founded, icon: Calendar },
-                { label: "Rating", value: `${company.rating}/5`, icon: Star },
-                { label: "Monthly Searches", value: company.monthlySearches, icon: TrendingUp },
-                { label: "Total Reviews", value: company.totalReviews.toLocaleString(), icon: Users },
+                { label: "Founded", value: unifiedData.founded, icon: Calendar },
+                { label: "Rating", value: `${unifiedData.rating}/5`, icon: Star },
+                { label: "Monthly Searches", value: unifiedData.monthlySearches, icon: TrendingUp },
+                { label: "Total Reviews", value: unifiedData.totalReviews.toLocaleString(), icon: Users },
               ].map((stat, index) => {
                 const Icon = stat.icon;
                 return (
@@ -1771,7 +1835,7 @@ const CompanyPage = () => {
                 Services Offered
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {company.services.map((service, index) => (
+                {unifiedData.services.map((service, index) => (
                   <motion.div
                     key={index}
                     initial={{ opacity: 0, scale: 0.9 }}
@@ -1795,7 +1859,7 @@ const CompanyPage = () => {
                   Primary Contact Numbers
                 </h3>
                 <div className="space-y-4">
-                  {company.nationalNumbers.map((contact, index) => (
+                  {unifiedData.nationalNumbers.map((contact, index) => (
                     <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                       <div>
                         <div className="font-semibold text-gray-900">{contact.type}</div>
@@ -1831,7 +1895,7 @@ const CompanyPage = () => {
                       <div className="text-sm text-gray-600">Complete services online</div>
                     </div>
                     <a
-                      href={company.website}
+                      href={unifiedData.website}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-semibold flex items-center gap-2"
@@ -1843,11 +1907,11 @@ const CompanyPage = () => {
                   <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div>
                       <div className="font-semibold text-gray-900">Customer Rating</div>
-                      <div className="text-sm text-gray-600">{company.totalReviews.toLocaleString()} reviews</div>
+                      <div className="text-sm text-gray-600">{unifiedData.totalReviews.toLocaleString()} reviews</div>
                     </div>
                     <div className="flex items-center gap-1">
                       <Star className="h-5 w-5 text-yellow-400 fill-current" />
-                      <span className="font-bold text-gray-900">{company.rating}/5</span>
+                      <span className="font-bold text-gray-900">{unifiedData.rating}/5</span>
                     </div>
                   </div>
                 </div>
